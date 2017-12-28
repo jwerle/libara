@@ -1,6 +1,5 @@
 #include <ara/ara.h>
-#include <uv.h>
-#include "uv.h"
+#include "async.h"
 
 static ARAvoid
 open_work_noop(ara_t *self) {
@@ -32,7 +31,7 @@ on_ara_open_work_done(ara_t *self) {
 }
 
 ARAvoid
-onuvopen(uv_async_t* handle) {
+onasyncopen(uv_async_t* handle) {
   ara_t *self = (ara_t *) handle->data;
   if (0 == self) { return; }
   if (0 == (self->bitfield.work & ARA_WORK_OPEN)) {
@@ -63,18 +62,18 @@ ara_open(ara_t *self, ara_open_cb *cb) {
   }
 
 init:
-  if (ARA_STATUS_INIT == self->status) {
-    self->status = ARA_STATUS_OPENING;
-    if (uv_async_send(&self->async.open) < 0) {
-      return ara_throw(self, ARA_EUVASYNCSEND);
-    }
+  self->status = ARA_STATUS_OPENING;
+  if (uv_async_send(&self->async.open) < 0) {
+    return ara_throw(self, ARA_EUVASYNCSEND);
   }
 
 opening:
   if (open_work_noop != cb) {
     self->callbacks.open.entries[self->callbacks.open.length++] = cb;
   }
+  return ARA_TRUE;
 
 opened:
+  cb(self);
   return ARA_TRUE;
 }

@@ -1,6 +1,5 @@
 #include <ara/ara.h>
-#include <uv.h>
-#include "uv.h"
+#include "async.h"
 
 static ARAvoid
 close_work_noop(ara_t *self) {
@@ -33,7 +32,7 @@ on_ara_close_work_done(ara_t *self) {
 }
 
 ARAvoid
-onuvclose(uv_async_t* handle) {
+onasyncclose(uv_async_t* handle) {
   ara_t *self = (ara_t *) handle->data;
   if (0 == self) { return; }
   if (0 == (self->bitfield.work & ARA_WORK_CLOSE)) {

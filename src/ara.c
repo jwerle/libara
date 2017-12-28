@@ -1,7 +1,6 @@
 #include <ara/ara.h>
 #include <string.h>
-#include <uv.h>
-#include "uv.h"
+#include "async.h"
 
 ARAboolean
 ara_init(ara_t *self) {
@@ -14,10 +13,15 @@ ara_init(ara_t *self) {
   self->error.data = 0;
   self->loop = uv_default_loop();
 
-#define INIT(which)                     \
-  self->which = 0;                      \
-  self->callbacks.which.length = 0;     \
-  self->callbacks.which.entries[0] = 0; \
+#define INIT(which)                                                        \
+  self->which = 0;                                                         \
+  self->callbacks.which.length = 0;                                        \
+  self->callbacks.which.entries[0] = 0;                                    \
+  if (uv_async_init(self->loop, &self->async.which, onasync##which) < 0) { \
+    return ara_throw(self, ARA_EUVASYNCINIT);                              \
+  } else {                                                                 \
+    self->async.which.data = (ARAvoid *) self;                             \
+  }                                                                        \
 
   INIT(open)
   INIT(close)
@@ -26,23 +30,7 @@ ara_init(ara_t *self) {
   INIT(write)
   INIT(unlink)
 
-#undef RESET
-
-#define ASYNC(which)                                                    \
-  if (uv_async_init(self->loop, &self->async.which, onuv##which) < 0) { \
-    return ara_throw(self, ARA_EUVASYNCINIT);                           \
-  } else {                                                              \
-    self->async.which.data = (ARAvoid *) self;                          \
-  }                                                                     \
-
-  ASYNC(open)
-  ASYNC(close)
-  ASYNC(end)
-  ASYNC(read)
-  ASYNC(write)
-  ASYNC(unlink)
-
-#undef ASYNC
+#undef INIT
 
   return ARA_TRUE;
 }
@@ -77,7 +65,13 @@ ara_set(ara_t *self, ara_work_t type, ara_cb *cb) {
 
 #undef SET
 
-  ara_clear_error(self);
+  ara_clear_error(&self->error);
   self->bitfield.work |= type;
   return ARA_TRUE;
+}
+
+ARAboolean
+ara_throw(ara_t *self, ara_error_code_t code) {
+  ara_set_error(&self->error, code, ara_error(code));
+  return ARA_FALSE;
 }

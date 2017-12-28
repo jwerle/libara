@@ -1,7 +1,7 @@
 #include <ara/ara.h>
 
 ARA_EXPORT ARAboolean
-ara_set_error(ara_t *self, ara_error_code_t code, ARAvoid *data) {
+ara_set_error(ara_error_t *self, ara_error_code_t code, ARAvoid *data) {
   if (0 == self) { return ARA_FALSE; }
 
 #define E(which) ARA_E##which
@@ -13,7 +13,7 @@ ara_set_error(ara_t *self, ara_error_code_t code, ARAvoid *data) {
     case E(UVASYNCINIT):
     case E(UVASYNCSEND):
     case E(BADSTATE):
-      self->error.code = code;
+      self->code = code;
       break;
 
     default: return ARA_FALSE;
@@ -21,9 +21,9 @@ ara_set_error(ara_t *self, ara_error_code_t code, ARAvoid *data) {
 #undef E
 
   if (data) {
-    self->error.data = data;
+    self->data = data;
   } else {
-    self->error.data = 0;
+    self->data = 0;
   }
 
   return ARA_TRUE;
@@ -47,15 +47,9 @@ ara_error(ara_error_code_t code) {
 }
 
 ARAboolean
-ara_clear_error(ara_t *self) {
+ara_clear_error(ara_error_t *self) {
   if (0 == self) { return ARA_FALSE; }
-  self->error.code = ARA_ENONE;
-  self->error.data = 0;
+  self->code = ARA_ENONE;
+  self->data = 0;
   return ARA_TRUE;
-}
-
-ARAboolean
-ara_throw(ara_t *self, ara_error_code_t code) {
-  ara_set_error(self, code, ara_error(code));
-  return ARA_FALSE;
 }

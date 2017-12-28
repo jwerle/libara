@@ -1,6 +1,5 @@
 #include <ara/ara.h>
-#include <uv.h>
-#include "uv.h"
+#include "async.h"
 
 static ARAvoid
 unlink_work_noop(ara_t *self) {
@@ -27,7 +26,7 @@ on_ara_unlink_work_done(ara_t *self) {
 }
 
 ARAvoid
-onuvunlink(uv_async_t* handle) {
+onasyncunlink(uv_async_t* handle) {
   ara_t *self = (ara_t *) handle->data;
   if (0 == self) { return; }
   if (0 == (self->bitfield.work & ARA_WORK_UNLINK)) {
@@ -67,6 +66,5 @@ opened:
     self->callbacks.unlink.entries[self->callbacks.unlink.length++] = cb;
   }
 
-ended:
   return ARA_TRUE;
 }
