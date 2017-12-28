@@ -44,7 +44,7 @@ onuvopen(uv_async_t* handle) {
 }
 
 ARAboolean
-ara_open(ara_t *self, ara_open_work_cb *cb) {
+ara_open(ara_t *self, ara_open_cb *cb) {
   if (0 == self) { return ARA_FALSE; }
   if (0 == self->loop) { return ara_throw(self, ARA_ENOUVLOOP); }
   if (0 == (self->bitfield.work & ARA_WORK_OPEN)) {

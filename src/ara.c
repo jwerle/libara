@@ -56,7 +56,7 @@ ara_set_loop(ara_t *self, uv_loop_t *loop) {
 }
 
 ARAboolean
-ara_set(ara_t *self, ara_work_t type, ara_work_cb *cb) {
+ara_set(ara_t *self, ara_work_t type, ara_cb *cb) {
   if (0 == self) { return ARA_FALSE; }
   if (0 == cb) { return ARA_FALSE; }
 
