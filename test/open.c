@@ -1,5 +1,4 @@
 #include <describe/describe.h>
-#include <assert.h>
 
 #include <ara/ara.h>
 #include <uv.h>
