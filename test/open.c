@@ -38,7 +38,7 @@ main(void) {
   called.work = 0;
   called.open = 0;
 
-  describe("ARAboolean ara_open(ara_t *self, ara_open_work_cb *cb);") {
+  describe("ARAboolean ara_open(ara_t *self, ara_open_cb *cb);") {
     it("should return 'ARA_FALSE' on 'NULL' 'ara_t' pointer.") {
       assert(ARA_FALSE == ara_open(0, 0));
     }
@@ -53,8 +53,8 @@ main(void) {
       assert(ARA_FALSE == ara_open(&ara, 0));
     }
 
-    it("should return 'ARA_TRUE' when 'ara_open_work_cb' set.") {
-      assert(ARA_TRUE == ara_set(&ara, ARA_WORK_OPEN, (ara_work_cb) ara_work_open));
+    it("should return 'ARA_TRUE' when 'ara_open_cb' set.") {
+      assert(ARA_TRUE == ara_set(&ara, ARA_WORK_OPEN, (ara_cb) ara_work_open));
       assert(ARA_TRUE == ara_open(&ara, onopen));
     }
   }

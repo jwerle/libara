@@ -29,8 +29,8 @@ onopen(ara_t *ara) {
   }
   (void) ++called.open;
 
-  describe("ARAboolean ara_close(ara_t *self, ara_close_work_cb *cb);") {
-    it("should return 'ARA_TRUE' even if 'ara_close_work_cb' set.") {
+  describe("ARAboolean ara_close(ara_t *self, ara_close_cb *cb);") {
+    it("should return 'ARA_TRUE' even if 'ara_close_cb' set.") {
       assert(ARA_TRUE == ara_close(ara, onclose));
     }
   }
@@ -64,7 +64,7 @@ main(void) {
   ara_t ara = {0};
   uv_loop_t *loop = uv_default_loop();
 
-  describe("ARAboolean ara_close(ara_t *self, ara_close_work_cb *cb);") {
+  describe("ARAboolean ara_close(ara_t *self, ara_close_cb *cb);") {
     it("should return 'ARA_FALSE' on 'NULL' 'ara_t' pointer.") {
       assert(ARA_FALSE == ara_close(0, 0));
     }
@@ -79,12 +79,12 @@ main(void) {
       assert(ARA_FALSE == ara_close(&ara, 0));
     }
 
-    it("should return 'ARA_FALSE' even if 'ara_end_work_cb' set.") {
-      assert(ARA_TRUE == ara_set(&ara, ARA_WORK_CLOSE, (ara_work_cb) ara_work_close));
+    it("should return 'ARA_FALSE' even if 'ara_end_cb' set.") {
+      assert(ARA_TRUE == ara_set(&ara, ARA_WORK_CLOSE, (ara_cb) ara_work_close));
       assert(ARA_FALSE == ara_close(&ara, onclose));
     }
 
-    assert(ARA_TRUE == ara_set(&ara, ARA_WORK_OPEN, (ara_work_cb) ara_work_open));
+    assert(ARA_TRUE == ara_set(&ara, ARA_WORK_OPEN, (ara_cb) ara_work_open));
     assert(ARA_TRUE == ara_open(&ara, onopen));
   }
 

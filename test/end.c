@@ -11,11 +11,6 @@ static struct {
 
 static void
 onend(ara_t *ara) {
-  describe("onend(ara_t *ara);") {
-    it("should expose ara with an 'ARA_STATUS_ENDED' status set.") {
-      assert(ARA_STATUS_ENDED == ara->status);
-    }
-  }
   (void) ++called.end;
   uv_stop(ara->loop);
 }
@@ -29,8 +24,8 @@ onopen(ara_t *ara) {
   }
   (void) ++called.open;
 
-  describe("ARAboolean ara_end(ara_t *self, ara_end_work_cb *cb);") {
-    it("should return 'ARA_TRUE' even if 'ara_end_work_cb' set.") {
+  describe("ARAboolean ara_end(ara_t *self, ara_end_cb *cb);") {
+    it("should return 'ARA_TRUE' even if 'ara_end_cb' set.") {
       assert(ARA_TRUE == ara_end(ara, onend));
     }
   }
@@ -49,12 +44,6 @@ ara_work_open(ara_t *ara, ara_work_done *done) {
 
 static void
 ara_work_end(ara_t *ara, ara_work_done *done) {
-  describe("ara_work_end(ara_t *ara, ara_work_done *done);") {
-    it("should expose ara with an 'ARA_STATUS_ENDING' status set.") {
-      assert(ARA_STATUS_ENDING == ara->status);
-    }
-  }
-
   (void) ++called.work;
   done(ara);
 }
@@ -67,7 +56,7 @@ main(void) {
   called.work = 0;
   called.end = 0;
 
-  describe("ARAboolean ara_end(ara_t *self, ara_end_work_cb *cb);") {
+  describe("ARAboolean ara_end(ara_t *self, ara_end_cb *cb);") {
     it("should return 'ARA_FALSE' on 'NULL' 'ara_t' pointer.") {
       assert(ARA_FALSE == ara_end(0, 0));
     }
@@ -82,12 +71,12 @@ main(void) {
       assert(ARA_FALSE == ara_end(&ara, 0));
     }
 
-    it("should return 'ARA_FALSE' even if 'ara_end_work_cb' set.") {
-      assert(ARA_TRUE == ara_set(&ara, ARA_WORK_END, (ara_work_cb) ara_work_end));
+    it("should return 'ARA_FALSE' even if 'ara_end_cb' set.") {
+      assert(ARA_TRUE == ara_set(&ara, ARA_WORK_END, (ara_cb) ara_work_end));
       assert(ARA_FALSE == ara_end(&ara, onend));
     }
 
-    assert(ARA_TRUE == ara_set(&ara, ARA_WORK_OPEN, (ara_work_cb) ara_work_open));
+    assert(ARA_TRUE == ara_set(&ara, ARA_WORK_OPEN, (ara_cb) ara_work_open));
     assert(ARA_TRUE == ara_open(&ara, onopen));
   }
 
