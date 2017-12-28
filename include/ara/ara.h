@@ -17,27 +17,27 @@ typedef enum ara_error_code ara_error_code_t;
 typedef enum ara_status ara_status_t;
 typedef enum ara_work ara_work_t;
 
-typedef ARAvoid * ara_work_cb;
+typedef ARAvoid * ara_cb;
 
 typedef void (ara_work_done)(ara_t *ara);
 
 typedef void (ara_open_work)(ara_t *ara, ara_work_done *done);
-typedef void (ara_open_work_cb)(ara_t *ara);
+typedef void (ara_open_cb)(ara_t *ara);
 
 typedef void (ara_close_work)(ara_t *ara, ara_work_done *done);
-typedef void (ara_close_work_cb)(ara_t *ara);
+typedef void (ara_close_cb)(ara_t *ara);
 
 typedef void (ara_end_work)(ara_t *ara, ara_work_done *done);
-typedef void (ara_end_work_cb)(ara_t *ara);
+typedef void (ara_end_cb)(ara_t *ara);
 
 typedef void (ara_read_work)(ara_t *ara, ara_work_done *done);
-typedef void (ara_read_work_cb)(ara_t *ara);
+typedef void (ara_read_cb)(ara_t *ara);
 
 typedef void (ara_write_work)(ara_t *ara, ara_work_done *done);
-typedef void (ara_write_work_cb)(ara_t *ara);
+typedef void (ara_write_cb)(ara_t *ara);
 
 typedef void (ara_unlink_work)(ara_t *ara, ara_work_done *done);
-typedef void (ara_unlink_work_cb)(ara_t *ara);
+typedef void (ara_unlink_cb)(ara_t *ara);
 
 enum ara_work {
 #define X(which) ARA_WORK_##which
@@ -114,7 +114,7 @@ struct ara {
   struct ara_callbacks {
 #define X(which) struct {                            \
   ARAuint length;                                    \
-  ara_##which##_work_cb *entries[ARA_MAX_CALLBACKS]; \
+  ara_##which##_cb *entries[ARA_MAX_CALLBACKS]; \
 } which;
 
     X(open)
@@ -145,7 +145,7 @@ ARA_EXPORT ARAboolean
 ara_init(ara_t *self);
 
 ARA_EXPORT ARAboolean
-ara_set(ara_t *ara, ara_work_t type, ara_work_cb *cb);
+ara_set(ara_t *ara, ara_work_t type, ara_cb *cb);
 
 ARA_EXPORT ARAboolean
 ara_set_loop(ara_t *ara, uv_loop_t *loop);
@@ -163,13 +163,19 @@ ARA_EXPORT ARAboolean
 ara_throw(ara_t *ara, ara_error_code_t code);
 
 ARA_EXPORT ARAboolean
-ara_open(ara_t *ara, ara_open_work_cb *cb);
+ara_open(ara_t *ara, ara_open_cb *cb);
 
 ARA_EXPORT ARAboolean
-ara_close(ara_t *ara, ara_close_work_cb *cb);
+ara_close(ara_t *ara, ara_close_cb *cb);
 
 ARA_EXPORT ARAboolean
-ara_end(ara_t *ara, ara_end_work_cb *cb);
+ara_end(ara_t *ara, ara_end_cb *cb);
+
+// @TODO ara_read
+// @TODO ara_write
+
+ARA_EXPORT ARAboolean
+ara_unlink(ara_t *ara, ara_unlink_cb *cb);
 
 #if defined(__cplusplus)
 }
