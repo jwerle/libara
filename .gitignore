@@ -1,2 +1,7 @@
 Makefile
 build/
+*.o
+test/ara
+test/close
+test/end
+test/open
