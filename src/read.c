@@ -42,9 +42,10 @@ onasyncread(uv_async_t* handle) {
   ara_async_data_t *data = read_data->data;
   ara_t *self = read_data->ara;
 
+  const ARAuint64 offset = data->offset;
+  const ARAuint64 length = data->length;
+
   ara_buffer_t buffer = {0};
-  ARAuint offset = data->offset;
-  ARAuint length = data->length;
 
   if (0 == self) { return; }
   if (0 == (self->bitfield.work & ARA_WORK_READ)) {
@@ -58,7 +59,7 @@ onasyncread(uv_async_t* handle) {
 }
 
 ARAboolean
-ara_read(ara_t *self, ARAuint offset, ARAuint length, ara_read_cb *cb) {
+ara_read(ara_t *self, const ARAuint64 offset, const ARAuint64 length, ara_read_cb *cb) {
   ara_async_data_t *data = 0;
 
   if (0 == self) { return ARA_FALSE; }

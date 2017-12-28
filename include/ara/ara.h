@@ -33,11 +33,12 @@ typedef ARAvoid (ara_end_work)(ara_t *ara, ara_work_done *done);
 typedef ARAvoid (ara_end_cb)(ara_t *ara);
 
 typedef ARAvoid (ara_read_work_done)(ara_t *ara, ara_buffer_t *buffer);
-typedef ARAvoid (ara_read_work)(ara_t *ara, const ARAuint offset, const ARAuint length, ara_buffer_t *buffer, ara_read_work_done *done);
+typedef ARAvoid (ara_read_work)(ara_t *ara, const ARAuint64 offset, const ARAuint64 length, ara_buffer_t *buffer, ara_read_work_done *done);
 typedef ARAvoid (ara_read_cb)(ara_t *ara, ara_buffer_t *buffer);
 
-typedef ARAvoid (ara_write_work)(ara_t *ara, ARAuint offsett, ARAuint length, ARAvoid *buffer, ara_work_done *done);
-typedef ARAvoid (ara_write_cb)(ara_t *ara, ARAuint length, ARAvoid *buffer);
+typedef ARAvoid (ara_write_work_done)(ara_t *ara, ara_buffer_t *buffer);
+typedef ARAvoid (ara_write_work)(ara_t *ara, const ARAuint64 offset, const ARAuint64 length, ara_buffer_t *buffer, ara_work_done *done);
+typedef ARAvoid (ara_write_cb)(ara_t *ara, const ARAuint64 length, ARAvoid *buffer);
 
 typedef ARAvoid (ara_unlink_work)(ara_t *ara, ara_work_done *done);
 typedef ARAvoid (ara_unlink_cb)(ara_t *ara);
@@ -95,18 +96,21 @@ struct ara_error {
 
 struct ara_buffer {
   struct ara_buffer_data {
-    char *base;
+    ARAvoid *base;
+    ARAuint64 length;
     uv_buf_t buffer;
     uv_buf_t buffer_mut;
   } data;
 
   ara_error_t error;
+  ARAvoid *alloc;
 };
 
 struct ara_async_data {
   ARAvoid *data;
-  ARAuint offset;
-  ARAuint length;
+  ARAuint64 offset;
+  ARAuint64 length;
+  ARAvoid *alloc;
 };
 
 struct ara {
@@ -195,9 +199,9 @@ ara_async_data_destroy(ara_async_data_t *data);
 
 // buffer
 ARA_EXPORT ARAboolean
-ara_buffer_init(ara_buffer_t *buffer, ARAuint length);
+ara_buffer_init(ara_buffer_t *buffer, const ARAuint64 length);
 
-ARA_EXPORT ARAboolean
+ARA_EXPORT ARAvoid
 ara_buffer_destroy(ara_buffer_t *buffer);
 
 // api
@@ -211,7 +215,7 @@ ARA_EXPORT ARAboolean
 ara_end(ara_t *ara, ara_end_cb *cb);
 
 ARA_EXPORT ARAboolean
-ara_read(ara_t *ara, ARAuint offset, ARAuint length, ara_read_cb *cb);
+ara_read(ara_t *ara, const ARAuint64 offset, const ARAuint64 length, ara_read_cb *cb);
 // @TODO ara_write
 
 ARA_EXPORT ARAboolean

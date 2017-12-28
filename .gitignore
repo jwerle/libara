@@ -5,3 +5,5 @@ test/ara
 test/close
 test/end
 test/open
+test/read
+test/unlink
