@@ -13,6 +13,7 @@ ara_set_error(ara_error_t *self, ara_error_code_t code, ARAvoid *data) {
     case E(UVASYNCINIT):
     case E(UVASYNCSEND):
     case E(BADSTATE):
+    case E(ACCESS):
       self->code = code;
       break;
 
@@ -40,6 +41,8 @@ ara_error(ara_error_code_t code) {
     case E(UVASYNCINIT, "Failed to initialize async handle.");
     case E(UVASYNCSEND, "Failed to trigger async handle.");
     case E(BADSTATE, "Bad state.");
+    case E(BADDATA, "Bad data.");
+    case E(ACCESS, "No access.");
     case E(NONE, "");
     default: return "An error has occurred";
   }

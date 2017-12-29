@@ -3,6 +3,7 @@
 
 #include "async.h"
 #include "read.h"
+#include "work.h"
 
 static ARAvoid
 read_work_noop(ara_t *self, ara_buffer_t *buffer) {
@@ -10,80 +11,110 @@ read_work_noop(ara_t *self, ara_buffer_t *buffer) {
 }
 
 static ARAvoid
-on_ara_read_work_done(ara_t *self, ara_buffer_t *buffer) {
-  ara_buffer_destroy(buffer);
-}
-
-static ara_async_read_data_t *
-ara_async_read_data_new(ara_t *ara, ara_async_data_t *data) {
-  ara_async_read_data_t *read_data = 0;
-  read_data = (ara_async_read_data_t *) malloc(sizeof(ara_async_read_data_t));
-  read_data->ara = ara;
-  read_data->data = data;
-  return read_data;
-}
-
-static ARAvoid
-ara_async_read_data_destroy(ara_async_read_data_t *read_data) {
-  if (read_data) {
-    if (read_data->data) {
-      ara_async_data_destroy(read_data->data);
-    }
-    read_data->data = 0;
-    read_data->ara = 0;
-    free(read_data);
-    read_data = 0;
+on_async_end(ara_t *self, ara_async_res_t *res) {
+  if (res && res->req) {
+    ara_async_req_destroy(res->req);
   }
 }
 
-ARAvoid
-onasyncread(uv_async_t* handle) {
-  ara_async_read_data_t *read_data = (ara_async_read_data_t *) handle->data;
-  ara_async_data_t *data = read_data->data;
-  ara_t *self = read_data->ara;
+static ARAvoid
+on_done(ara_t *self, ara_async_req_t *req) {
+  if (0 == self || 0 == req) {
+    return;
+  }
 
-  const ARAuint64 offset = data->offset;
-  const ARAuint64 length = data->length;
+  if (self->error.code < ARA_ENONE) {
+    goto end;
+  }
 
-  ara_buffer_t buffer = {0};
+  if (ARA_STATUS_OPENED != self->status) {
+    ara_throw(self, ARA_EBADSTATE);
+    goto end;
+  }
 
-  if (0 == self) { return; }
+  ara_open_cb *cb = (ara_open_cb *) req->data.data;
+
+  if (cb) {
+    cb(self);
+  }
+
+end:
+  ara_async_req_end(req);
+}
+
+static ARAvoid
+on_async_begin(ara_t *self, ara_async_req_t *req) {
+  if (0 == self) {
+    return;
+  }
+
   if (0 == (self->bitfield.work & ARA_WORK_READ)) {
     ara_throw(self, ARA_ENOCALLBACK);
     return;
   }
 
-  if (ARA_TRUE == ara_buffer_init(&buffer, length)) {
-    self->read(self, offset, length, &buffer, on_ara_read_work_done);
+  switch (self->status) {
+    case ARA_STATUS_OPENED:
+      return self->read(self, req, &on_done);
+
+    default:
+      ara_throw(self, ARA_EBADSTATE);
+      return on_done(self, req);
   }
 }
 
 ARAboolean
-ara_read(ara_t *self, const ARAuint64 offset, const ARAuint64 length, ara_read_cb *cb) {
-  ara_async_data_t *data = 0;
-
-  if (0 == self) { return ARA_FALSE; }
-  if (0 == self->loop) { return ara_throw(self, ARA_ENOUVLOOP); }
-  if (0 == (self->bitfield.work & ARA_WORK_READ)) {
-    return ara_throw(self, ARA_ENOCALLBACK);
-  }
+ara_read(ara_t *self,
+         const ARAuint64 offset,
+         const ARAuint64 length,
+         ara_read_cb *cb)
+{
+  ara_async_data_t data = {0};
+  ara_async_req_t *req = 0;
 
   if (0 == cb) {
     cb = read_work_noop;
   }
 
-  switch (self->status) {
-    case ARA_STATUS_OPENED: goto opened;
-    default: return ara_throw(self, ARA_EBADSTATE);
+  if (self) {
+    switch (self->status) {
+      case ARA_STATUS_OPENED:
+        break;
+
+      default:
+        WORK_THROW(self, ARA_EBADSTATE);
+    }
   }
 
-opened:
-  data = ara_async_data_new();
-  data->offset = offset;
-  data->length = length;
-  self->async.read.data = ara_async_read_data_new(self, data);
-  if (uv_async_send(&self->async.read) < 0) {
-    return ara_throw(self, ARA_EUVASYNCSEND);
+  if (ARA_FALSE == ara_async_data_init(&data)) {
+    WORK_THROW(self, ARA_ENOCALLBACK);
   }
-  return ARA_TRUE;
+
+  data.offset = offset;
+  data.length = length;
+  data.data = cb;
+
+  WORK(self, ARA_WORK_READ, req, data, on_async_begin, on_async_end);
+}
+
+ara_async_read_data_t *
+ara_async_read_data_new(ara_t *ara, ara_async_data_t *data, ara_read_cb *cb) {
+  ara_async_read_data_t *self= 0;
+  self = (ara_async_read_data_t *) malloc(sizeof(ara_async_read_data_t));
+  self->ara = ara;
+  self->data = data;
+  return self;
+}
+
+ARAvoid
+ara_async_read_data_destroy(ara_async_read_data_t *self) {
+  if (self) {
+    if (self->data) {
+      ara_async_data_destroy(self->data);
+    }
+    self->data = 0;
+    self->ara = 0;
+    free(self);
+    self = 0;
+  }
 }

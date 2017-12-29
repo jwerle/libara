@@ -6,10 +6,6 @@ write_work_noop(ara_t *ara, ara_error_t *err) {
   (void) (ara); (void) (err);
 }
 
-static void
-on_ara_write_work_done(ara_t *self) {
-}
-
 void onasyncwrite(uv_async_t* handle) {
   ara_t *self = (ara_t *) handle->data;
   if (0 == self) { return; }

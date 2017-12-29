@@ -1,5 +1,6 @@
 #include <ara/ara.h>
 #include "async.h"
+#include "work.h"
 
 static ARAvoid
 close_work_noop(ara_t *self) {
@@ -7,81 +8,93 @@ close_work_noop(ara_t *self) {
 }
 
 static ARAvoid
-on_ara_close_async_done(uv_handle_t *handle) {
-  (ARAvoid) handle;
-}
-
-static ARAvoid
-on_ara_noop_async_done(uv_handle_t *handle) {
-  (ARAvoid) handle;
-}
-
-static ARAvoid
-on_ara_close_work_done(ara_t *self) {
-  if (0 == self) { return; }
-  if (self->error.code < ARA_ENONE) { return; }
-  self->status = ARA_STATUS_CLOSED;
-  for (int i = 0; i < self->callbacks.close.length; ++i) {
-    if (0 != self->callbacks.close.entries[i]) {
-      self->callbacks.close.entries[i](self);
-      self->callbacks.close.entries[i] = 0;
-    }
+on_async_end(ara_t *self, ara_async_res_t *res) {
+  if (res && res->req) {
+    ara_async_req_destroy(res->req);
   }
-  self->callbacks.close.length = 0;
-  uv_close((uv_handle_t *) &self->async.close, on_ara_close_async_done);
 }
 
-ARAvoid
-onasyncclose(uv_async_t* handle) {
-  ara_t *self = (ara_t *) handle->data;
-  if (0 == self) { return; }
+static ARAvoid
+on_done(ara_t *self, ara_async_req_t *req) {
+  if (0 == self || 0 == req) {
+    return;
+  }
+
+  if (self->error.code < ARA_ENONE) {
+    goto end;
+  }
+
+  if (ARA_STATUS_CLOSING != self->status) {
+    ara_throw(self, ARA_EBADSTATE);
+    goto end;
+  }
+
+  ara_close_cb *cb = (ara_close_cb *) req->data.data;
+
+  self->status = ARA_STATUS_CLOSED;
+
+  if (cb) {
+    cb(self);
+  }
+
+end:
+  ara_async_req_end(req);
+}
+
+static ARAvoid
+on_async_begin(ara_t *self, ara_async_req_t *req) {
+  if (0 == self) {
+    return;
+  }
+
   if (0 == (self->bitfield.work & ARA_WORK_CLOSE)) {
     ara_throw(self, ARA_ENOCALLBACK);
     return;
   }
 
-  self->close(self, on_ara_close_work_done);
+  switch (self->status) {
+    case ARA_STATUS_OPENING:
+    case ARA_STATUS_OPENED:
+      self->status = ARA_STATUS_CLOSING;
+      return self->close(self, req, &on_done);
+
+    case ARA_STATUS_CLOSING:
+    case ARA_STATUS_CLOSED:
+      return on_done(self, req);
+
+    default:
+      ara_throw(self, ARA_EBADSTATE);
+      return on_done(self, req);
+  }
 }
 
 ARAboolean
 ara_close(ara_t *self, ara_close_cb *cb) {
-  if (0 == self) { return ARA_FALSE; }
-  if (0 == self->loop) { return ara_throw(self, ARA_ENOUVLOOP); }
-  if (0 == (self->bitfield.work & ARA_WORK_CLOSE)) {
-    return ara_throw(self, ARA_ENOCALLBACK);
-  }
+  ara_async_data_t data = {0};
+  ara_async_req_t *req = 0;
 
   if (0 == cb) {
     cb = close_work_noop;
   }
 
-  switch (self->status) {
-    case ARA_STATUS_OPENING:
-      uv_close((uv_handle_t *) &self->async.open, on_ara_noop_async_done);
-    case ARA_STATUS_OPENED:
-      goto opened;
+  if (self) {
+    switch (self->status) {
+      case ARA_STATUS_OPENING:
+      case ARA_STATUS_OPENED:
+      case ARA_STATUS_CLOSING:
+      case ARA_STATUS_CLOSED:
+        break;
 
-    case ARA_STATUS_ENDING:
-    case ARA_STATUS_ENDED:
-      uv_close((uv_handle_t *) &self->async.end, on_ara_noop_async_done);
-      goto opened;
-
-    case ARA_STATUS_CLOSING: goto closing;
-    case ARA_STATUS_CLOSED: goto closed;
-    default: return ara_throw(self, ARA_EBADSTATE);
+      default:
+        WORK_THROW(self, ARA_EBADSTATE);
+    }
   }
 
-opened:
-  if (uv_async_send(&self->async.close) < 0) {
-    return ara_throw(self, ARA_EUVASYNCSEND);
+  if (ARA_FALSE == ara_async_data_init(&data)) {
+    WORK_THROW(self, ARA_ENOCALLBACK);
   }
 
-closing:
-  self->status = ARA_STATUS_CLOSING;
-  if (close_work_noop != cb) {
-    self->callbacks.close.entries[self->callbacks.close.length++] = cb;
-  }
+  data.data = cb;
 
-closed:
-  return ARA_TRUE;
+  WORK(self, ARA_WORK_CLOSE, req, data, on_async_begin, on_async_end);
 }

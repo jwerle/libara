@@ -10,53 +10,55 @@ static struct {
 } called = {0};
 
 static void
-onclose(ara_t *ara) {
-  describe("onclose(ara_t *ara);") {
-    it("should expose ara with an 'ARA_STATUS_CLOSED' status set.") {
-      assert(ARA_STATUS_CLOSED == ara->status);
-    }
-  }
-  (void) ++called.close;
-  uv_stop(ara->loop);
-}
+ara_work_open(ara_t *ara, ara_async_req_t *req, ara_work_done *done) {
+  (void) ++called.work;
 
-static void
-onopen(ara_t *ara) {
-  describe("onopen(ara_t *ara);") {
-    it("should expose ara with an 'ARA_STATUS_OPENED' status set.") {
-      assert(ARA_STATUS_OPENED == ara->status);
-    }
-  }
-  (void) ++called.open;
-
-  describe("ARAboolean ara_close(ara_t *self, ara_close_cb *cb);") {
-    it("should return 'ARA_TRUE' even if 'ara_close_cb' set.") {
-      assert(ARA_TRUE == ara_close(ara, onclose));
-    }
-  }
-}
-
-static void
-ara_work_open(ara_t *ara, ara_work_done *done) {
   describe("ara_work_open(ara_t *ara, ara_work_done *done);") {
     it("should expose ara with an 'ARA_STATUS_OPENING' status set.") {
       assert(ARA_STATUS_OPENING == ara->status);
     }
   }
-  (void) ++called.work;
-  done(ara);
+
+  done(ara, req);
 }
 
 static void
-ara_work_close(ara_t *ara, ara_work_done *done) {
+ara_work_close(ara_t *ara, ara_async_req_t *req, ara_work_done *done) {
+  (void) ++called.work;
+
   describe("ara_work_close(ara_t *ara, ara_work_done *done);") {
     it("should expose ara with an 'ARA_STATUS_CLOSING' status set.") {
       assert(ARA_STATUS_CLOSING == ara->status);
     }
   }
 
-  (void) ++called.work;
-  done(ara);
+  done(ara, req);
+}
+
+static void
+onclose(ara_t *ara) {
+  (void) ++called.close;
+  describe("onclose(ara_t *ara);") {
+    it("should expose ara with an 'ARA_STATUS_CLOSED' status set.") {
+      assert(ARA_STATUS_CLOSED == ara->status);
+    }
+  }
+}
+
+static void
+onopen(ara_t *ara) {
+  (void) ++called.open;
+  describe("onopen(ara_t *ara);") {
+    it("should expose ara with an 'ARA_STATUS_OPENED' status set.") {
+      assert(ARA_STATUS_OPENED == ara->status);
+    }
+  }
+
+  describe("ARAboolean ara_close(ara_t *self, ara_close_cb *cb);") {
+    it("should return 'ARA_TRUE' even if 'ara_close_cb' set.") {
+      assert(ARA_TRUE == ara_close(ara, onclose));
+    }
+  }
 }
 
 int
@@ -80,11 +82,11 @@ main(void) {
     }
 
     it("should return 'ARA_FALSE' even if 'ara_end_cb' set.") {
-      assert(ARA_TRUE == ara_set(&ara, ARA_WORK_CLOSE, (ara_cb) ara_work_close));
+      assert(ARA_TRUE == ara_set(&ara, ARA_WORK_CLOSE, (ara_worker_cb) ara_work_close));
       assert(ARA_FALSE == ara_close(&ara, onclose));
     }
 
-    assert(ARA_TRUE == ara_set(&ara, ARA_WORK_OPEN, (ara_cb) ara_work_open));
+    assert(ARA_TRUE == ara_set(&ara, ARA_WORK_OPEN, (ara_worker_cb) ara_work_open));
     assert(ARA_TRUE == ara_open(&ara, onopen));
   }
 

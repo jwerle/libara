@@ -1,5 +1,6 @@
 #include <ara/ara.h>
 #include "async.h"
+#include "work.h"
 
 static ARAvoid
 open_work_noop(ara_t *self) {
@@ -7,73 +8,78 @@ open_work_noop(ara_t *self) {
 }
 
 static ARAvoid
-on_ara_open_async_done(uv_handle_t *handle) {
-  (ARAvoid) handle;
+on_async_end(ara_t *self, ara_async_res_t *res) {
+  if (res && res->req) {
+    ara_async_req_destroy(res->req);
+  }
 }
 
 static ARAvoid
-on_ara_open_work_done(ara_t *self) {
-  if (0 == self) { return; }
-  if (self->error.code < ARA_ENONE) { return; }
-  if (ARA_STATUS_OPENING != self->status) { return; }
+on_done(ara_t *self, ara_async_req_t *req) {
+  if (0 == self || 0 == req) {
+    return;
+  }
+
+  if (self->error.code < ARA_ENONE) {
+    goto end;
+  }
+
+  if (ARA_STATUS_OPENING != self->status) {
+    ara_throw(self, ARA_EBADSTATE);
+    goto end;
+  }
+
+  ara_open_cb *cb = (ara_open_cb *) req->data.data;
 
   self->status = ARA_STATUS_OPENED;
 
-  for (int i = 0; i < self->callbacks.open.length; ++i) {
-    if (0 != self->callbacks.open.entries[i]) {
-      self->callbacks.open.entries[i](self);
-      self->callbacks.open.entries[i] = 0;
-    }
+  if (cb) {
+    cb(self);
   }
 
-  self->callbacks.open.length = 0;
-  uv_close((uv_handle_t *) &self->async.open, on_ara_open_async_done);
+end:
+  ara_async_req_end(req);
 }
 
-ARAvoid
-onasyncopen(uv_async_t* handle) {
-  ara_t *self = (ara_t *) handle->data;
+static ARAvoid
+on_async_begin(ara_t *self, ara_async_req_t *req) {
   if (0 == self) { return; }
+
   if (0 == (self->bitfield.work & ARA_WORK_OPEN)) {
     ara_throw(self, ARA_ENOCALLBACK);
     return;
   }
 
-  self->open(self, on_ara_open_work_done);
+  switch (self->status) {
+    case ARA_STATUS_OPENED:
+    case ARA_STATUS_OPENING:
+      return on_done(self, req);
+
+    case ARA_STATUS_INIT:
+      self->status = ARA_STATUS_OPENING;
+      return self->open(self, req, &on_done);
+
+    default:
+      ara_throw(self, ARA_EBADSTATE);
+      return on_done(self, req);
+
+  }
 }
 
 ARAboolean
 ara_open(ara_t *self, ara_open_cb *cb) {
-  if (0 == self) { return ARA_FALSE; }
-  if (0 == self->loop) { return ara_throw(self, ARA_ENOUVLOOP); }
-  if (0 == (self->bitfield.work & ARA_WORK_OPEN)) {
-    return ara_throw(self, ARA_ENOCALLBACK);
-  }
+  ara_async_data_t data = {0};
+  ara_async_req_t *req = 0;
 
   if (0 == cb) {
     cb = open_work_noop;
   }
 
-  switch (self->status) {
-    case ARA_STATUS_INIT: goto init;
-    case ARA_STATUS_OPENING: goto opening;
-    case ARA_STATUS_OPENED: goto opened;
-    default: return ara_throw(self, ARA_EBADSTATE);
+  if (ARA_FALSE == ara_async_data_init(&data)) {
+    WORK_THROW(self, ARA_ENOCALLBACK);
   }
 
-init:
-  self->status = ARA_STATUS_OPENING;
-  if (uv_async_send(&self->async.open) < 0) {
-    return ara_throw(self, ARA_EUVASYNCSEND);
-  }
+  data.data = cb;
 
-opening:
-  if (open_work_noop != cb) {
-    self->callbacks.open.entries[self->callbacks.open.length++] = cb;
-  }
-  return ARA_TRUE;
-
-opened:
-  cb(self);
-  return ARA_TRUE;
+  WORK(self, ARA_WORK_OPEN, req, data, on_async_begin, on_async_end);
 }

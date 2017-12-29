@@ -9,25 +9,26 @@ static struct {
 } called = {0};
 
 static void
-ara_work_open(ara_t *ara, ara_work_done *done) {
+ara_work_open(ara_t *ara, ara_async_req_t *req, ara_work_done *done) {
+  (void) ++called.work;
+
   describe("ara_work_open(ara_t *ara, ara_work_done *done);") {
     it("should expose ara with an 'ARA_STATUS_OPENING' status set.") {
       assert(ARA_STATUS_OPENING == ara->status);
     }
   }
-  (void) ++called.work;
-  done(ara);
+
+  done(ara, req);
 }
 
 static void
 onopen(ara_t *ara) {
+  (void) ++called.open;
   describe("on_open(ara_t *ara);") {
     it("should expose ara with an 'ARA_STATUS_OPENED' status set.") {
       assert(ARA_STATUS_OPENED == ara->status);
     }
   }
-  (void) ++called.open;
-  uv_stop(ara->loop);
 }
 
 int
@@ -54,7 +55,7 @@ main(void) {
     }
 
     it("should return 'ARA_TRUE' when 'ara_open_cb' set.") {
-      assert(ARA_TRUE == ara_set(&ara, ARA_WORK_OPEN, (ara_cb) ara_work_open));
+      assert(ARA_TRUE == ara_set(&ara, ARA_WORK_OPEN, (ara_worker_cb) ara_work_open));
       assert(ARA_TRUE == ara_open(&ara, onopen));
     }
   }

@@ -32,20 +32,20 @@ onopen(ara_t *ara) {
 }
 
 static void
-ara_work_open(ara_t *ara, ara_work_done *done) {
+ara_work_open(ara_t *ara, ara_async_req_t *req, ara_work_done *done) {
+  (void) ++called.work;
   describe("ara_work_open(ara_t *ara, ara_work_done *done);") {
     it("should expose ara with an 'ARA_STATUS_OPENING' status set.") {
       assert(ARA_STATUS_OPENING == ara->status);
     }
   }
-  (void) ++called.work;
-  done(ara);
+  done(ara, req);
 }
 
 static void
-ara_work_unlink(ara_t *ara, ara_work_done *done) {
+ara_work_unlink(ara_t *ara, ara_async_req_t *req, ara_work_done *done) {
   (void) ++called.work;
-  done(ara);
+  done(ara, req);
 }
 
 int
@@ -72,11 +72,11 @@ main(void) {
     }
 
     it("should return 'ARA_FALSE' even if 'ara_unlink_cb' set.") {
-      assert(ARA_TRUE == ara_set(&ara, ARA_WORK_UNLINK, (ara_cb) ara_work_unlink));
+      assert(ARA_TRUE == ara_set(&ara, ARA_WORK_UNLINK, (ara_worker_cb) ara_work_unlink));
       assert(ARA_FALSE == ara_unlink(&ara, onunlink));
     }
 
-    assert(ARA_TRUE == ara_set(&ara, ARA_WORK_OPEN, (ara_cb) ara_work_open));
+    assert(ARA_TRUE == ara_set(&ara, ARA_WORK_OPEN, (ara_worker_cb) ara_work_open));
     assert(ARA_TRUE == ara_open(&ara, onopen));
   }
 

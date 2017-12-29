@@ -1,5 +1,6 @@
 #include <ara/ara.h>
 #include "async.h"
+#include "work.h"
 
 static ARAvoid
 unlink_work_noop(ara_t *self) {
@@ -7,64 +8,77 @@ unlink_work_noop(ara_t *self) {
 }
 
 static ARAvoid
-on_ara_unlink_async_done(uv_handle_t *handle) {
-  (ARAvoid) handle;
+on_async_end(ara_t *self, ara_async_res_t *res) {
+  if (res && res->req) {
+    ara_async_req_destroy(res->req);
+  }
 }
 
 static ARAvoid
-on_ara_unlink_work_done(ara_t *self) {
-  if (0 == self) { return; }
-  if (self->error.code < ARA_ENONE) { return; }
-  for (int i = 0; i < self->callbacks.unlink.length; ++i) {
-    if (0 != self->callbacks.unlink.entries[i]) {
-      self->callbacks.unlink.entries[i](self);
-      self->callbacks.unlink.entries[i] = 0;
-    }
+on_done(ara_t *self, ara_async_req_t *req) {
+  if (0 == self || 0 == req) {
+    return;
   }
-  self->callbacks.unlink.length = 0;
-  uv_close((uv_handle_t *) &self->async.unlink, on_ara_unlink_async_done);
+
+  if (self->error.code < ARA_ENONE) {
+    goto end;
+  }
+
+  if (ARA_STATUS_OPENED != self->status) {
+    ara_throw(self, ARA_EBADSTATE);
+    goto end;
+  }
+
+  ara_open_cb *cb = (ara_open_cb *) req->data.data;
+
+  if (cb) {
+    cb(self);
+  }
+
+end:
+  ara_async_req_end(req);
 }
 
-ARAvoid
-onasyncunlink(uv_async_t* handle) {
-  ara_t *self = (ara_t *) handle->data;
-  if (0 == self) { return; }
+static ARAvoid
+on_async_begin(ara_t *self, ara_async_req_t *req) {
+  if (0 == self) {
+    return;
+  }
+
   if (0 == (self->bitfield.work & ARA_WORK_UNLINK)) {
     ara_throw(self, ARA_ENOCALLBACK);
     return;
   }
 
-  self->unlink(self, on_ara_unlink_work_done);
+  switch (self->status) {
+    case ARA_STATUS_OPENED:
+      return self->unlink(self, req, &on_done);
+
+    default:
+      ara_throw(self, ARA_EBADSTATE);
+      return on_done(self, req);
+  }
 }
 
 ARAboolean
 ara_unlink(ara_t *self, ara_unlink_cb *cb) {
-  if (0 == self) { return ARA_FALSE; }
-  if (0 == self->loop) { return ara_throw(self, ARA_ENOUVLOOP); }
-  if (0 == (self->bitfield.work & ARA_WORK_UNLINK)) {
-    return ara_throw(self, ARA_ENOCALLBACK);
-  }
+  ara_async_data_t data = {0};
+  ara_async_req_t *req = 0;
 
   if (0 == cb) {
     cb = unlink_work_noop;
   }
 
-  switch (self->status) {
-    case ARA_STATUS_OPENING:
-    case ARA_STATUS_OPENED:
-      goto opened;
-
-    default: return ara_throw(self, ARA_EBADSTATE);
+  if (self) {
+    switch (self->status) {
+      case ARA_STATUS_OPENING:
+      case ARA_STATUS_OPENED:
+        break;
+      default: return ara_throw(self, ARA_EBADSTATE);
+    }
   }
 
-opened:
-  if (uv_async_send(&self->async.unlink) < 0) {
-    return ara_throw(self, ARA_EUVASYNCSEND);
-  }
+  data.data = cb;
 
-  if (unlink_work_noop != cb) {
-    self->callbacks.unlink.entries[self->callbacks.unlink.length++] = cb;
-  }
-
-  return ARA_TRUE;
+  WORK(self, ARA_WORK_UNLINK, req, data, on_async_begin, on_async_end);
 }
