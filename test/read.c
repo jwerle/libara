@@ -10,12 +10,14 @@ static struct {
   ARAuint read;
 } called = {0};
 
-static const struct {
+struct Range {
   ARAuint64 offset;
   ARAuint64 length;
-} range = {
-  .offset = 0,
-  .length = 1024
+};
+
+static const struct Range range[] = {
+  {.offset = 0, .length = 1024},
+  {.offset = 100, .length = 1024 + 100},
 };
 
 static void
@@ -50,18 +52,29 @@ ara_work_read(ara_t *ara, ara_async_req_t *req, ara_read_work_done *done) {
 
   describe("ara_work_read(ara, offset, length, buffer, done)") {
     it("should expose correct range offset.") {
-      assert(range.offset == offset);
+      switch (called.read) {
+        case 0: assert(range[0].offset == offset); break;
+        case 1: assert(range[1].offset == offset); break;
+      }
     }
 
     it("should expose correct range length.") {
-      assert(range.length == length);
+      switch (called.read) {
+        case 0: assert(range[0].length == length); break;
+        case 1: assert(range[1].length == length); break;
+      }
     }
 
-    it("shuold expose a buffer pointer.") {
+    it("should expose a buffer pointer.") {
       assert(0 != buffer);
     }
   }
 
+  if (0 == called.read) {
+    sleep(1);
+  } else {
+    printf("NEXT\n");
+  }
   done(ara, req);
 }
 
@@ -101,8 +114,8 @@ onopen(ara_t *ara) {
 
     it("should return 'ARA_TRUE' when 'ara_read_cb' set.") {
       assert(ARA_TRUE == ara_set(ara, ARA_WORK_READ, (ara_worker_cb) ara_work_read));
-      assert(ARA_TRUE == ara_read(ara, range.offset, range.length, onread));
-      //assert(ARA_TRUE == ara_read(ara, range.offset + 100, range.length - 100, onread));
+      assert(ARA_TRUE == ara_read(ara, range[0].offset, range[0].length, onread));
+      assert(ARA_TRUE == ara_read(ara, range[1].offset, range[1].length, onread));
     }
   }
 }
@@ -145,9 +158,10 @@ main(void) {
   uv_run(loop, UV_RUN_DEFAULT);
   uv_loop_close(loop);
 
-  //assert(2 == called.work);
+  assert(4 == called.work);
   assert(called.open);
   assert(called.close);
+  assert(2 == called.read);
 
   return assert_failures();
 }
