@@ -166,7 +166,6 @@ test/clean:
 
 ## Compiles and runs all test
 .PHONY: test
-test: BRIEF_ARGS = test (build)
 test: build
 	$(MAKE) -C $@
 
