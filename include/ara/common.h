@@ -24,6 +24,7 @@ typedef int ARAint;
 typedef int ARAsizei;
 typedef void ARAvoid;
 typedef char ARAchar;
+typedef long ARAlong;
 typedef short ARAshort;
 
 typedef unsigned int ARAuint;

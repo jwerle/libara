@@ -10,23 +10,23 @@ static struct {
 } called = {0};
 
 static void
-onend(ara_t *ara) {
+onend(ara_t *ara, ara_async_res_t *res) {
   (void) ++called.end;
   uv_stop(ara->loop);
 }
 
 static void
-onopen(ara_t *ara) {
+onopen(ara_t *ara, ara_async_res_t *res) {
+  (void) ++called.open;
   describe("onopen(ara_t *ara);") {
     it("should expose ara with an 'ARA_STATUS_OPENED' status set.") {
       assert(ARA_STATUS_OPENED == ara->status);
     }
   }
-  (void) ++called.open;
 
-  describe("ARAboolean ara_end(ara_t *self, ara_end_cb *cb);") {
+  describe("ARAboolean ara_end(ara_t *self, ara_async_res_t *res, ara_end_cb *cb);") {
     it("should return 'ARA_TRUE' even if 'ara_end_cb' set.") {
-      assert(ARA_TRUE == ara_end(ara, onend));
+      assert(ARA_TRUE == ara_end(ara, 0, onend));
     }
   }
 }
@@ -53,28 +53,28 @@ main(void) {
   ara_t ara = {0};
   uv_loop_t *loop = uv_default_loop();
 
-  describe("ARAboolean ara_end(ara_t *self, ara_end_cb *cb);") {
+  describe("ARAboolean ara_end(ara_t *self, ara_async_res_t *res, ara_end_cb *cb);") {
     it("should return 'ARA_FALSE' on 'NULL' 'ara_t' pointer.") {
-      assert(ARA_FALSE == ara_end(0, 0));
+      assert(ARA_FALSE == ara_end(0, 0, 0));
     }
 
     it("should return 'ARA_FALSE' when not initialized") {
-      assert(ARA_FALSE == ara_end(&ara, 0));
+      assert(ARA_FALSE == ara_end(&ara, 0, 0));
     }
 
     assert(ARA_TRUE == ara_init(&ara));
 
     it("should return 'ARA_FALSE' when 'ARA_WORK_END' bit is not set.") {
-      assert(ARA_FALSE == ara_end(&ara, 0));
+      assert(ARA_FALSE == ara_end(&ara, 0, 0));
     }
 
     it("should return 'ARA_FALSE' even if 'ara_end_cb' set.") {
       assert(ARA_TRUE == ara_set(&ara, ARA_WORK_END, (ara_worker_cb) ara_work_end));
-      assert(ARA_FALSE == ara_end(&ara, onend));
+      assert(ARA_FALSE == ara_end(&ara, 0, onend));
     }
 
     assert(ARA_TRUE == ara_set(&ara, ARA_WORK_OPEN, (ara_worker_cb) ara_work_open));
-    assert(ARA_TRUE == ara_open(&ara, onopen));
+    assert(ARA_TRUE == ara_open(&ara, 0, onopen));
   }
 
   assert(0 == called.work);

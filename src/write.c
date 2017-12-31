@@ -2,8 +2,8 @@
 #include "async.h"
 
 static void
-write_work_noop(ara_t *ara, ara_error_t *err) {
-  (void) (ara); (void) (err);
+write_work_noop(ara_t *ara, ara_async_res_t *res) {
+  (void) (ara); (void) (res);
 }
 
 void onasyncwrite(uv_async_t* handle) {

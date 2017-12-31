@@ -19,7 +19,8 @@ on_uv_async_send(uv_async_t *handle) {
 
 static ARAvoid
 on_uv_close(uv_handle_t *handle) {
-  (ARAvoid) handle;
+  ara_async_req_t *req = (ara_async_req_t *) handle->data;
+  ara_async_req_destroy(req);
 }
 
 ara_async_data_t *
@@ -81,6 +82,8 @@ ara_async_req_new(ara_t *ara, ara_async_req_cb *onreq, ara_async_res_cb *onres) 
   ara_async_res_init(&self->res, ara, onres);
 
   self->alloc = self;
+  self->buffer = &self->res.buffer;
+  self->res.req = self;
 
   return self;
 
@@ -128,10 +131,11 @@ ara_async_res_init(ara_async_res_t *self, ara_t *ara, ara_async_res_cb *cb) {
     return ARA_FALSE;
   }
 
+  memset(self, 0, sizeof(ara_async_res_t));
+
   ara_clear_error(&self->error);
   ara_async_data_init(&self->data);
-
-  memset(self, 0, sizeof(ara_async_res_t));
+  ara_buffer_init(&self->buffer, 0);
 
   self->ara = ara;
   self->alloc = 0;
@@ -159,6 +163,7 @@ ara_async_req_send(ara_async_req_t *self, ara_async_data_t *data) {
   self->data.data = data->data;
   self->data.offset = data->offset;
   self->data.length = data->length;
+  self->data.callback = data->callback;
 
   if (uv_async_send(&self->handle) < 0) {
     ara_throw(self->ara, ARA_EUVASYNCSEND);
@@ -194,6 +199,7 @@ error:
 ARAvoid
 ara_async_req_destroy(ara_async_req_t *self) {
   if (0 != self && self == self->alloc) {
+    ara_buffer_destroy(&self->res.buffer);
     self->alloc = 0;
     free(self);
     self = 0;

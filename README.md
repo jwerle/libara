@@ -15,7 +15,10 @@ TODO
 
 ## Example
 
-TODO
+```c
+#include <ara/ara.h>
+
+```
 
 ## License
 

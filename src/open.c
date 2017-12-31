@@ -3,15 +3,13 @@
 #include "work.h"
 
 static ARAvoid
-open_work_noop(ara_t *self) {
-  (ARAvoid) (self);
+open_work_noop(ara_t *self, ara_async_res_t *res) {
+  (ARAvoid) (self); (ARAvoid) (res);
 }
 
 static ARAvoid
 on_async_end(ara_t *self, ara_async_res_t *res) {
-  if (res && res->req) {
-    ara_async_req_destroy(res->req);
-  }
+  (ARAvoid) (self); (ARAvoid) (res);
 }
 
 static ARAvoid
@@ -29,12 +27,12 @@ on_done(ara_t *self, ara_async_req_t *req) {
     goto end;
   }
 
-  ara_open_cb *cb = (ara_open_cb *) req->data.data;
+  ara_open_cb *cb = (ara_open_cb *) req->data.callback;
 
   self->status = ARA_STATUS_OPENED;
 
   if (cb) {
-    cb(self);
+    cb(self, &req->res);
   }
 
 end:
@@ -67,19 +65,20 @@ on_async_begin(ara_t *self, ara_async_req_t *req) {
 }
 
 ARAboolean
-ara_open(ara_t *self, ara_open_cb *cb) {
-  ara_async_data_t data = {0};
+ara_open(ara_t *self, ara_async_data_t *data, ara_open_cb *cb) {
   ara_async_req_t *req = 0;
+  static ara_async_data_t empty = {0};
+
+  if (0 == data) {
+    ara_async_data_init(&empty);
+    data = &empty;
+  }
 
   if (0 == cb) {
     cb = open_work_noop;
   }
 
-  if (ARA_FALSE == ara_async_data_init(&data)) {
-    WORK_THROW(self, ARA_ENOCALLBACK);
-  }
-
-  data.data = cb;
+  data->callback = cb;
 
   WORK(self, ARA_WORK_OPEN, req, data, on_async_begin, on_async_end);
 }

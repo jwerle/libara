@@ -154,6 +154,7 @@ endif
 ## Cleans project directory
 .PHONY: clean
 clean: test/clean
+clean: example/clean
 clean: BRIEF_ARGS = $(OBJS) $(BUILD_DIRECTORY)
 clean:
 	$(RM) $(OBJS) $(BUILD_DIRECTORY)
@@ -167,6 +168,16 @@ test/clean:
 ## Compiles and runs all test
 .PHONY: test
 test: build
+	$(MAKE) -C $@
+
+.PHONY: example/clean
+example/clean: BRIEF_ARGS = clean (example)
+example/clean:
+	$(MAKE) clean -C example
+
+## Compiles example
+.PHONY: example
+example: build
 	$(MAKE) -C $@
 
 ## Installs library into system

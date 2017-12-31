@@ -40,11 +40,40 @@ ara_buffer_init(ara_buffer_t *self, const ARAuint64 length) {
   return ARA_TRUE;
 }
 
+ARAboolean
+ara_buffer_realloc(ara_buffer_t *self, const ARAuint64 length) {
+  if (0 == self) {
+    return ARA_FALSE;
+  }
+
+  if (length) {
+    if (self->data.base && self->data.length) {
+      ARAvoid *ptr = (ARAvoid *) realloc(self->data.base, length);
+      if (ptr) {
+        self->data.base = ptr;
+        self->data.length = length;
+      } else {
+        self->data.base = 0;
+        self->data.length = 0;
+        return ARA_FALSE;
+      }
+    } else {
+      self->data.base = (ARAvoid *) malloc(length);
+    }
+  } else if (self->data.base) {
+    free(self->data.base);
+    self->data.length = 0;
+    self->data.base = 0;
+  }
+  return ARA_TRUE;
+}
+
 ARAvoid
 ara_buffer_destroy(ara_buffer_t *self) {
   if (0 == self) { return; }
   if (self->data.base) {
     free(self->data.base);
+    self->data.base = 0;
   }
   if (self == self->alloc) {
     self->alloc = 0;
