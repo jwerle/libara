@@ -8,4 +8,4 @@ test/open
 test/read
 test/unlink
 test/*-test
-example/raf
+example/raf/raf
