@@ -135,7 +135,6 @@ ara_async_res_init(ara_async_res_t *self, ara_t *ara, ara_async_res_cb *cb) {
 
   ara_clear_error(&self->error);
   ara_async_data_init(&self->data);
-  ara_buffer_init(&self->buffer, 0);
 
   self->ara = ara;
   self->alloc = 0;
@@ -164,6 +163,8 @@ ara_async_req_send(ara_async_req_t *self, ara_async_data_t *data) {
   self->data.offset = data->offset;
   self->data.length = data->length;
   self->data.callback = data->callback;
+
+  ara_buffer_init(self->buffer, data->length);
 
   if (uv_async_send(&self->handle) < 0) {
     ara_throw(self->ara, ARA_EUVASYNCSEND);

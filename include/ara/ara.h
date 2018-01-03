@@ -112,6 +112,7 @@ struct ara_buffer {
     uv_buf_t buffer_mut;
   } data;
 
+  ARAuint written;
   ara_error_t error;
   ARAvoid *alloc;
 };
@@ -231,6 +232,12 @@ ara_buffer_init(ara_buffer_t *buffer, const ARAuint64 length);
 
 ARA_EXPORT ARAvoid
 ara_buffer_destroy(ara_buffer_t *buffer);
+
+ARA_EXPORT ARAuint
+ara_buffer_write(ara_buffer_t *buffer, ARAuint offset, ARAuint length, ARAvoid *data);
+
+ARA_EXPORT ARAuint
+ara_buffer_read(ara_buffer_t *buffer, ARAuint offset, ARAuint length, ARAvoid *out);
 
 // api
 ARA_EXPORT ARAboolean

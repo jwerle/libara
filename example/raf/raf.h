@@ -11,6 +11,7 @@ typedef struct RandomAccessFileRequest RandomAccessFileRequest;
 typedef struct RandomAccessFileDebuggers RandomAccessFileDebuggers;
 
 typedef struct RandomAccessFileEndOptions RandomAccessFileEndOptions;
+typedef struct RandomAccessFileReadOptions RandomAccessFileReadOptions;
 
 typedef enum RandomAccessFileMode RandomAccessFileMode;
 
@@ -24,6 +25,7 @@ typedef ARAvoid * RandomAccessFileCallback;
   CALLBACK(Open)
   CALLBACK(Close)
   CALLBACK(End)
+  CALLBACK(Read)
 
 #undef CALLBACK
 
@@ -52,10 +54,12 @@ enum RandomAccessFileMode {
 struct RandomAccessFileRequest {
   uv_fs_t fs;
   ara_work_done *done;
+  ara_buffer_t *buffer;
   RandomAccessFile *raf;
   RandomAccessFileMode mode;
   RandomAccessFileCallback callback;
   ARAvoid *data;
+  ARAvoid *opts;
 };
 
 struct RandomAccessFile {
@@ -73,6 +77,13 @@ struct RandomAccessFile {
 struct RandomAccessFileEndOptions {
   ARAuint mtime;
   ARAuint atime;
+  ARAvoid *data;
+};
+
+struct RandomAccessFileReadOptions {
+  ARAuint offset;
+  ARAuint length;
+  ARAvoid *data;
 };
 
 extern RandomAccessFileDebuggers __RandomAccessFileDebuggers;
@@ -112,5 +123,10 @@ ARAboolean
 raf_end(RandomAccessFile *raf,
         RandomAccessFileEndOptions *opts,
         RandomAccessFileEndCallback *callback);
+
+ARAboolean
+raf_read(RandomAccessFile *raf,
+        RandomAccessFileReadOptions *opts,
+        RandomAccessFileReadCallback *callback);
 
 #endif

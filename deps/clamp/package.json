@@ -1,0 +1,16 @@
+{
+  "name": "clamp",
+  "version": "0.0.1",
+  "repo": "littlstar/clamp",
+  "description": "Clamp a value between two other values",
+  "keywords": [
+    "clamp",
+    "value"
+  ],
+  "src": [
+    "clamp.h"
+  ],
+  "development": {
+    "jwerle/libok": "0.0.2"
+  }
+}

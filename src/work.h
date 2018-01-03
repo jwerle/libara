@@ -28,7 +28,7 @@
     WORK_ERROR(self);                                \
   }                                                  \
                                                      \
-  if (ARA_FALSE == ara_async_req_send(req, data)) { \
+  if (ARA_FALSE == ara_async_req_send(req, data)) {  \
     WORK_THROW(self, ARA_EUVASYNCSEND);              \
   }                                                  \
                                                      \
