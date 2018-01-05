@@ -29,10 +29,11 @@ typedef short ARAshort;
 
 typedef unsigned int ARAuint;
 typedef unsigned int ARAenum;
+typedef unsigned char ARAuchar;
+typedef unsigned short ARAushort;
 
 typedef unsigned int ARAbitfield;
 typedef unsigned char ARAboolean;
-typedef unsigned short ARAushort;
 
 // C99
 #if (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L) || defined(__GNUC__)

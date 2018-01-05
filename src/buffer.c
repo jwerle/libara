@@ -56,9 +56,10 @@ ara_buffer_realloc(ara_buffer_t *self, const ARAuint64 length) {
 
   if (length) {
     if (self->data.base && self->data.length) {
-      ARAvoid *ptr = (ARAvoid *) realloc(self->data.base, length);
-      if (ptr) {
-        self->data.base = ptr;
+      ARAvoid *region = (ARAvoid *) realloc(self->data.base, length);
+      if (region) {
+        memset(region + length, 0, length);
+        self->data.base = region;
         self->data.length = length;
       } else {
         self->data.base = 0;
@@ -107,30 +108,25 @@ ara_buffer_write(ara_buffer_t *self, ARAuint offset, ARAuint length, ARAvoid *da
   }
 
   if (offset > self->data.length && length > 0) {
-    if (ARA_FALSE == ara_buffer_realloc(self, offset + length )) {
+    if (ARA_FALSE == ara_buffer_realloc(self, offset + length)) {
       return 0;
     }
   }
 
-  ARAvoid *ptr = self->data.base;
-  ARAuint max = offset + length;
+  ARAvoid *region = self->data.base;
 
-  if (0 == ptr) {
+  if (0 == region) {
     return 0;
   }
 
-  for (int i = 0; i < offset; ++i) {
-    (ARAvoid) ++ptr;
-  }
-
-  memcpy(ptr, data, length);
+  memcpy(region + offset, data, length);
   self->written += length;
   return length;
 }
 
 ARA_EXPORT ARAuint
 ara_buffer_read(ara_buffer_t *self, ARAuint offset, ARAuint length, ARAvoid *out) {
-  if (0 == self) {
+  if (0 == self || 0 == out) {
     return 0;
   }
 
@@ -138,18 +134,17 @@ ara_buffer_read(ara_buffer_t *self, ARAuint offset, ARAuint length, ARAvoid *out
     return 0;
   }
 
-  ARAvoid *ptr = self->data.base;
-  ARAuint max = offset + length;
+  ARAvoid *region = self->data.base;
 
-  if (0 == ptr) {
+  if (0 == region) {
     return 0;
   }
 
-  for (int i = 0; i < offset; ++i) {
-    (ARAvoid) ++ptr;
+  memset(out, 0, length);
+
+  if (0 == memcpy(out, region + offset, length)) {
+    return 0;
   }
 
-  memset(out, 0, length);
-  memcpy(out, ptr, length);
-  return 0;
+  return length;
 }

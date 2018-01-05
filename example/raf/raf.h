@@ -12,8 +12,9 @@ typedef struct RandomAccessFileDebuggers RandomAccessFileDebuggers;
 
 typedef struct RandomAccessFileEndOptions RandomAccessFileEndOptions;
 typedef struct RandomAccessFileReadOptions RandomAccessFileReadOptions;
+typedef struct RandomAccessFileWriteOptions RandomAccessFileWriteOptions;
 
-typedef enum RandomAccessFileMode RandomAccessFileMode;
+typedef enum RandomAccessFileFlags RandomAccessFileFlags;
 
 typedef ARAvoid * RandomAccessFileCallback;
 
@@ -26,6 +27,7 @@ typedef ARAvoid * RandomAccessFileCallback;
   CALLBACK(Close)
   CALLBACK(End)
   CALLBACK(Read)
+  CALLBACK(Write)
 
 #undef CALLBACK
 
@@ -44,11 +46,12 @@ struct RandomAccessFileDebuggers {
 #undef X
 };
 
-enum RandomAccessFileMode {
-  RAF_MODE_NONE = 0,
-  RAF_MODE_READ_ONLY,
-  RAF_MODE_WRITE_ONLY,
-  RAF_MODE_READ_WRITE
+enum RandomAccessFileFlags {
+  RAF_NONE = 0,
+  RAF_OPEN_NONE = 0,
+  RAF_OPEN_READ_ONLY,
+  RAF_OPEN_WRITE_ONLY,
+  RAF_OPEN_READ_WRITE
 };
 
 struct RandomAccessFileRequest {
@@ -56,7 +59,7 @@ struct RandomAccessFileRequest {
   ara_work_done *done;
   ara_buffer_t *buffer;
   RandomAccessFile *raf;
-  RandomAccessFileMode mode;
+  RandomAccessFileFlags flags;
   RandomAccessFileCallback callback;
   ARAvoid *data;
   ARAvoid *opts;
@@ -83,7 +86,12 @@ struct RandomAccessFileEndOptions {
 struct RandomAccessFileReadOptions {
   ARAuint offset;
   ARAuint length;
-  ARAvoid *data;
+};
+
+struct RandomAccessFileWriteOptions {
+  ARAuint offset;
+  ARAuint length;
+  ARAvoid *buffer;
 };
 
 extern RandomAccessFileDebuggers __RandomAccessFileDebuggers;
@@ -112,7 +120,7 @@ raf_init(RandomAccessFile *raf, const ARAchar *filename);
 
 ARAboolean
 raf_open(RandomAccessFile *raf,
-         const RandomAccessFileMode mode,
+         const RandomAccessFileFlags flags,
          RandomAccessFileOpenCallback *callback);
 
 ARAboolean
@@ -128,5 +136,10 @@ ARAboolean
 raf_read(RandomAccessFile *raf,
         RandomAccessFileReadOptions *opts,
         RandomAccessFileReadCallback *callback);
+
+ARAboolean
+raf_write(RandomAccessFile *raf,
+          RandomAccessFileWriteOptions *opts,
+          RandomAccessFileWriteCallback *callback);
 
 #endif

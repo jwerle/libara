@@ -234,10 +234,10 @@ ARA_EXPORT ARAvoid
 ara_buffer_destroy(ara_buffer_t *buffer);
 
 ARA_EXPORT ARAuint
-ara_buffer_write(ara_buffer_t *buffer, ARAuint offset, ARAuint length, ARAvoid *data);
+ara_buffer_read(ara_buffer_t *buffer, ARAuint offset, ARAuint length, ARAvoid *out);
 
 ARA_EXPORT ARAuint
-ara_buffer_read(ara_buffer_t *buffer, ARAuint offset, ARAuint length, ARAvoid *out);
+ara_buffer_write(ara_buffer_t *buffer, ARAuint offset, ARAuint length, ARAvoid *data);
 
 // api
 ARA_EXPORT ARAboolean
@@ -251,6 +251,9 @@ ara_end(ara_t *ara, ara_async_data_t *data, ara_end_cb *cb);
 
 ARA_EXPORT ARAboolean
 ara_read(ara_t *ara, ara_async_data_t *data, ara_read_cb *cb);
+
+ARA_EXPORT ARAboolean
+ara_write(ara_t *ara, ara_async_data_t *data, ara_write_cb *cb);
 
 // @TODO ara_write
 

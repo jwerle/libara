@@ -26,8 +26,10 @@ on_ara_read(ara_t *ara, ara_async_res_t *res) {
 static ARAvoid
 on_uv_fs_read(uv_fs_t *fs) {
   D(read, "on_uv_fs_read()");
+
   RandomAccessFileRequest *rafreq = (RandomAccessFileRequest *) fs;
   RandomAccessFileReadOptions *opts = (RandomAccessFileReadOptions *) rafreq->opts;
+
   UV_FS_PROCESS_REQ(fs, opts->offset, uv_fs_read, on_uv_fs_read);
 }
 
@@ -80,6 +82,15 @@ raf_read(RandomAccessFile *self,
   if (0 == opts) {
     memset(&opts, 0, sizeof(RandomAccessFileReadOptions));
     opts = &defaults;
+  }
+
+  if (opts->offset >= self->size) {
+    opts->offset = self->size;
+    opts->length = 0;
+  }
+
+  if (opts->offset + opts->length > self->size) {
+    opts->length = self->size - opts->offset;
   }
 
   if (opts->length > self->size) {

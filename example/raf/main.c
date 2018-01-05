@@ -10,8 +10,9 @@
 #include "util.h"
 #include "raf.h"
 
+#define MAX_READERS 8
+#define MAX_WRITERS 8
 #define PROGRAM "raf"
-#define MAX_READERS 128
 
 static RandomAccessFile *file = 0;
 static ARAboolean error = ARA_FALSE;
@@ -30,18 +31,26 @@ static struct {
   .length = BUFSIZ,
 };
 
-static struct {
-  ARAuint read;
-} worker_index = {
-  .read = 0,
+static struct { ARAuint read, write; } worker_index = {
+  .read = 0, .write = 0,
 };
 
 static ara_buffer_t buffer = {0};
+static int cpu_count = 1;
 
 static inline RandomAccessFileReadOptions *
-readopts_read_next() {
+readopts_next() {
   static RandomAccessFileReadOptions readopts_stack[MAX_READERS] = {0};
   return &readopts_stack[ worker_index.read++ % MAX_READERS ];
+}
+
+static inline RandomAccessFileWriteOptions *
+writeopts_next() {
+  static RandomAccessFileWriteOptions writeopts_stack[MAX_WRITERS] = {0};
+  return memset(
+      &writeopts_stack[ worker_index.write++ % MAX_WRITERS ],
+      0,
+      sizeof(RandomAccessFileWriteOptions));
 }
 
 ARAvoid
@@ -66,14 +75,11 @@ onread(RandomAccessFile *self, RandomAccessFileRequest *req) {
 
       ara_buffer_write(&buffer, opts->offset, opts->length, req->buffer->data.base);
 
-      printf("size=%d written=%d B=%d\n",
-          self->size, buffer.written, self->size == buffer.written);
-
       if (self->size == buffer.written) {
-        printf("BUF = %s\n", req->buffer->data.base);
         ARAchar out[self->size];
-        ara_buffer_read(&buffer, 0, self->size, out);
-        //printf("out=%s\n", out);
+        assert(ara_buffer_read(&buffer, 0, self->size, out) > 0);
+        out[self->size] = '\0';
+        printf("%s", out);
       }
     }
   } else {
@@ -82,28 +88,45 @@ onread(RandomAccessFile *self, RandomAccessFileRequest *req) {
 }
 
 ARAvoid
+onwrite(RandomAccessFile *self, RandomAccessFileRequest *req) {
+  D("onread()");
+}
+
+ARAvoid
 onopen(RandomAccessFile *self, RandomAccessFileRequest *req) {
   D("onopen()");
-  ARAuint max = MAX_READERS;
+  ARAuint max = cpu_count;
 
   if (self->fd > -1) {
     D("onopen(): fd=%d filename=%s size=%d",
         self->fd, self->filename, self->size);
 
-    if (MAX_READERS >= self->size){
-      max = self->size;
+    if (max > self->size) {
+      max = 1;
     }
 
     D("onopen(): readers=%d", max);
     ara_buffer_init(&buffer, self->size);
 
-    for (int i = 0; i < max; ++i) {
-      RandomAccessFileReadOptions *readopts = readopts_read_next();
+    RandomAccessFileWriteOptions *writeopts = writeopts_next();
+    ARAuchar buf[BUFSIZ];
 
-      readopts->length = npot(ceil((double) self->size / max));
+    assert(memset(buf, 0, BUFSIZ));
+    assert(strncpy(buf, "hello dood\n", BUFSIZ));
+    writeopts->offset = 0;
+    writeopts->length = strlen(buf);
+    writeopts->buffer = buf;
+    assert(ARA_TRUE == raf_write(self, writeopts, onwrite));
+
+    return;
+    for (int i = 0; i < max; ++i) {
+      RandomAccessFileReadOptions *readopts = readopts_next();
+
+      readopts->length = ceil((double) self->size / max);
       readopts->offset = i * readopts->length;
 
-      D("onopen(): raf_read(): offset=%d length=%d", readopts->offset, readopts->length);
+      D("onopen(): raf_read(): offset=%d length=%d size=%d",
+          readopts->offset, readopts->length, self->size);
       assert(ARA_TRUE == raf_read(self, readopts, onread));
     }
   } else {
@@ -187,14 +210,19 @@ main(int argc, const char **argv) {
     return 1;
   }
 
+  uv_cpu_info_t *cpu_info = 0;
+  assert(0 == uv_cpu_info(&cpu_info, &cpu_count));
+  uv_free_cpu_info(cpu_info, cpu_count);
+  cpu_info = 0;
+
   D("main(): uv: loop=uv_default_loop()");
   assert(loop = uv_default_loop());
 
   D("main(): raf(): filename=%s", opts.filename);
   assert(file = raf(opts.filename));
 
-  D("main(): raf_open(): mode=RAF_MODE_READ_ONLY)");
-  assert(ARA_TRUE == raf_open(file, RAF_MODE_READ_ONLY, onopen));
+  D("main(): raf_open(): flags=RAF_OPEN_READ_WRITE)");
+  assert(ARA_TRUE == raf_open(file, RAF_OPEN_READ_WRITE, onopen));
 
   D("main(): uv_run() mode=UV_RUN_DEFAULT");
   uv_run(loop, UV_RUN_DEFAULT);

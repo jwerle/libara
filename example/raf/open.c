@@ -59,6 +59,7 @@ on_uv_fs_open(uv_fs_t *fs) {
   ara_async_req_t *req = (ara_async_req_t *) fs->data;
   RandomAccessFileRequest *rafreq = (RandomAccessFileRequest *) req->data.data;
   RandomAccessFile *raf = rafreq->raf;
+  ARAboolean flags = 0;
 
   D(open, "on_uv_fs_open(): result=%d", fs->result);
   raf->fd = fs->result;
@@ -68,25 +69,25 @@ on_uv_fs_open(uv_fs_t *fs) {
     return on_uv_fs_done(fs);
   }
 
-  D(open, "on_uv_fs_done(): mode=%d", rafreq->mode);
+  D(open, "on_uv_fs_done(): flags=%d", rafreq->flags);
 
-  switch (rafreq->mode) {
-    case RAF_MODE_READ_WRITE:
-      D(open, "on_uv_fs_open(): mode=RAF_MODE_READ_WRITE");
-      raf->readable = ARA_TRUE;
-
-    case RAF_MODE_WRITE_ONLY:
-      raf->writable = ARA_TRUE;
-      break;
-
-    case RAF_MODE_READ_ONLY:
-      D(open, "on_uv_fs_open(): mode=RAF_MODE_READ_ONLY");
-      raf->writable = ARA_FALSE;
-      raf->readable = ARA_TRUE;
-      break;
-
-    default:
-      panic(RAF_MODE_NONE == rafreq->mode, "Unhandled mode '%d'", rafreq->mode);
+  if (0 != (rafreq->flags & RAF_OPEN_READ_WRITE)) {
+    D(open, "on_uv_fs_open(): flags=RAF_OPEN_READ_WRITE");
+    raf->readable = ARA_TRUE;
+    raf->writable = ARA_TRUE;
+    flags = rafreq->flags;
+  } else if (0 != (rafreq->flags & RAF_OPEN_READ_ONLY)) {
+    D(open, "on_uv_fs_open(): flags=RAF_OPEN_READ_ONLY");
+    raf->readable = ARA_TRUE;
+    raf->writable = ARA_FALSE;
+    flags = rafreq->flags;
+  } else if (0 != (rafreq->flags & RAF_OPEN_WRITE_ONLY)) {
+    D(open, "on_uv_fs_open(): flags=RAF_OPEN_READ_ONLY");
+    raf->readable = ARA_FALSE;
+    raf->writable = ARA_TRUE;
+    flags = rafreq->flags;
+  } else {
+    panic(RAF_OPEN_NONE == rafreq->flags, "Unhandled flags '%d'", rafreq->flags);
   }
 
   D(open, "on_uv_fs_open(): uv_fs_req_cleanup()");
@@ -100,17 +101,20 @@ static ARAvoid
 ara_work_open(ara_t *ara, ara_async_req_t *req, ara_open_work_done *done) {
   D(open, "ara_work_open()");
 
-  RandomAccessFileRequest *rafreq = (RandomAccessFileRequest *) req->data.data;
+  RandomAccessFileRequest *rafreq = 0;
   int flags = 0;
 
-  switch (rafreq->mode) {
-    case RAF_MODE_READ_WRITE: flags = UV_FS_O_RDWR; break;
-    case RAF_MODE_WRITE_ONLY: flags = UV_FS_O_WRONLY; break;
-    case RAF_MODE_READ_ONLY: flags = UV_FS_O_RDONLY; break;
-    case RAF_MODE_NONE: flags = 0; break;
+  rafreq = (RandomAccessFileRequest *) req->data.data;
+
+  if (0 != (rafreq->flags & RAF_OPEN_READ_WRITE)) {
+    flags = UV_FS_O_RDWR | UV_FS_O_CREAT;
+  } else if (0 != (rafreq->flags & RAF_OPEN_READ_ONLY)) {
+    flags = UV_FS_O_RDONLY;
+  } else if (0 != (rafreq->flags & RAF_OPEN_WRITE_ONLY)) {
+    flags = UV_FS_O_WRONLY | UV_FS_O_CREAT;
   }
 
-  D(open, "ara_work_open(): mode=%d flags=%d", rafreq->mode, flags);
+  D(open, "ara_work_open(): flags=%d", flags);
 
   rafreq->fs.data = req;
   rafreq->done = done;
@@ -119,12 +123,13 @@ ara_work_open(ara_t *ara, ara_async_req_t *req, ara_open_work_done *done) {
   uv_fs_open(ara->loop,
              (uv_fs_t *) rafreq,
              rafreq->raf->filename,
-             flags, 0, on_uv_fs_open);
+             flags, 0666,
+             on_uv_fs_open);
 }
 
 ARAboolean
 raf_open(RandomAccessFile *self,
-         const RandomAccessFileMode mode,
+         const RandomAccessFileFlags flags,
          RandomAccessFileOpenCallback *callback) {
   D(open, "raf_open()");
 
@@ -134,10 +139,10 @@ raf_open(RandomAccessFile *self,
   panic(self, "Out of memory.");
   panic((req = make(RandomAccessFileRequest)), "Out of memory.");
 
-  D(open, "raf_open(): mode=%d", mode);
+  D(open, "raf_open(): flags=%d", flags);
 
   req->callback = callback;
-  req->mode = mode;
+  req->flags = flags;
   req->raf = self;
 
   data.data = req;
