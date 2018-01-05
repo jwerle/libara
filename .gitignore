@@ -2,10 +2,10 @@ Makefile
 build/
 *.o
 test/ara
+test/open
 test/close
 test/end
-test/open
 test/read
+test/write
 test/unlink
-test/*-test
 example/raf/raf

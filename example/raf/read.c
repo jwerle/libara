@@ -105,10 +105,10 @@ raf_read(RandomAccessFile *self,
   data.length = opts->length;
 
   panic(ara_set(&self->ara, ARA_WORK_READ, (ara_worker_cb *) ara_work_read),
-        "ara: error: '%s'", ara_error(self->ara.error.code));
+        "ara: error: '%s'", ara_strerror(self->ara.error.code));
 
   panic(ara_read(&self->ara, &data, on_ara_read),
-        "ara: error: '%s'", ara_error(self->ara.error.code));
+        "ara: error: '%s'", ara_strerror(self->ara.error.code));
 
   D(read, "raf_read(): fd=%d filename=%s offset=%d length=%d",
       self->fd, self->filename, opts->offset, opts->length);

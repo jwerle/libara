@@ -18,7 +18,7 @@
     WORK_THROW(self, ARA_ENOUVLOOP);                 \
   }                                                  \
                                                      \
-  if (0 == (self->bitfield.work & type)) {           \
+  if (type != (self->bitfield.work & type)) {        \
     WORK_THROW(self, ARA_ENOCALLBACK);               \
   }                                                  \
                                                      \

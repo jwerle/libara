@@ -77,11 +77,8 @@ ara_write(ara_t *self, ara_async_data_t *data, ara_write_cb *cb) {
 
   if (self) {
     switch (self->status) {
-      case ARA_STATUS_OPENED:
-        break;
-
-      default:
-        WORK_THROW(self, ARA_EBADSTATE);
+      case ARA_STATUS_OPENED: break;
+      default: WORK_THROW(self, ARA_EBADSTATE);
     }
   }
 

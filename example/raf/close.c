@@ -65,11 +65,11 @@ raf_close(RandomAccessFile *self, RandomAccessFileCloseCallback *callback) {
 
   panic(ara_set(&self->ara, ARA_WORK_CLOSE, (ara_worker_cb *) ara_work_close),
         "ara: error: '%s'",
-        ara_error(self->ara.error.code));
+        ara_strerror(self->ara.error.code));
 
   panic(ara_close(&self->ara, &data, on_ara_close),
         "ara: error: '%s'",
-        ara_error(self->ara.error.code));
+        ara_strerror(self->ara.error.code));
 
   D(close, "raf_close() fd=%d filename=%s", self->fd, self->filename);
   return ARA_TRUE;

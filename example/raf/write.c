@@ -50,6 +50,10 @@ ara_work_write(ara_t *ara, ara_async_req_t *req, ara_open_work_done *done) {
   rafreq->buffer = buffer;
   rafreq->done = done;
 
+  if (opts->buffer && buffer->data.base) {
+    memcpy(buffer->data.base, opts->buffer, opts->length);
+  }
+
   buffer->data.buffer.base = buffer->data.base;
   buffer->data.buffer.len = buffer->data.length;
   buffer->data.buffer_mut = buffer->data.buffer;
@@ -84,19 +88,6 @@ raf_write(RandomAccessFile *self,
     opts = &defaults;
   }
 
-  if (opts->offset >= self->size) {
-    opts->offset = self->size;
-    opts->length = 0;
-  }
-
-  if (opts->offset + opts->length > self->size) {
-    opts->length = self->size - opts->offset;
-  }
-
-  if (opts->length > self->size) {
-    opts->length = self->size;
-  }
-
   req->callback = callback;
   req->opts = opts;
   req->raf = self;
@@ -105,10 +96,10 @@ raf_write(RandomAccessFile *self,
   data.length = opts->length;
 
   panic(ara_set(&self->ara, ARA_WORK_WRITE, (ara_worker_cb *) ara_work_write),
-        "ara: error: '%s'", ara_error(self->ara.error.code));
+        "ara: error: '%s'", ara_strerror(self->ara.error.code));
 
   panic(ara_write(&self->ara, &data, on_ara_write),
-        "ara: error: '%s'", ara_error(self->ara.error.code));
+        "ara: error: '%s'", ara_strerror(self->ara.error.code));
 
   D(write, "raf_write(): fd=%d filename=%s offset=%d length=%d",
       self->fd, self->filename, opts->offset, opts->length);

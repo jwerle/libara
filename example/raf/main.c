@@ -89,7 +89,6 @@ onread(RandomAccessFile *self, RandomAccessFileRequest *req) {
 
 ARAvoid
 onwrite(RandomAccessFile *self, RandomAccessFileRequest *req) {
-  D("onread()");
 }
 
 ARAvoid
@@ -108,15 +107,41 @@ onopen(RandomAccessFile *self, RandomAccessFileRequest *req) {
     D("onopen(): readers=%d", max);
     ara_buffer_init(&buffer, self->size);
 
-    RandomAccessFileWriteOptions *writeopts = writeopts_next();
-    ARAuchar buf[BUFSIZ];
+    {
+      RandomAccessFileWriteOptions *writeopts = writeopts_next();
+      ARAchar *buf = "hello";
+      ARAsizei size = strlen(buf);
 
-    assert(memset(buf, 0, BUFSIZ));
-    assert(strncpy(buf, "hello dood\n", BUFSIZ));
-    writeopts->offset = 0;
-    writeopts->length = strlen(buf);
-    writeopts->buffer = buf;
-    assert(ARA_TRUE == raf_write(self, writeopts, onwrite));
+      writeopts->offset = 0;
+      writeopts->length = size;
+      writeopts->buffer = buf;
+
+      assert(ARA_TRUE == raf_write(self, writeopts, onwrite));
+    }
+
+    {
+      RandomAccessFileWriteOptions *writeopts = writeopts_next();
+      ARAchar *buf = "  ";
+      ARAsizei size = strlen(buf);
+
+      writeopts->offset = 5;
+      writeopts->length = size;
+      writeopts->buffer = buf;
+
+      assert(ARA_TRUE == raf_write(self, writeopts, onwrite));
+    }
+
+    {
+      RandomAccessFileWriteOptions *writeopts = writeopts_next();
+      ARAchar *buf = "world";
+      ARAsizei size = strlen(buf);
+
+      writeopts->offset = 6j;
+      writeopts->length = size;
+      writeopts->buffer = buf;
+
+      assert(ARA_TRUE == raf_write(self, writeopts, onwrite));
+    }
 
     return;
     for (int i = 0; i < max; ++i) {

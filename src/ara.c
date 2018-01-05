@@ -58,6 +58,6 @@ ara_set(ara_t *self, ara_work_t type, ara_worker_cb *cb) {
 
 ARAboolean
 ara_throw(ara_t *self, ara_error_code_t code) {
-  ara_set_error(&self->error, code, ara_error(code));
+  ara_set_error(&self->error, code, ara_strerror(code));
   return ARA_FALSE;
 }

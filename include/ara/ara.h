@@ -57,12 +57,12 @@ enum ara_work {
 #define X(which) ARA_WORK_##which
 
   X(UNKNOWN) = 0,
-  X(OPEN),
-  X(CLOSE),
-  X(END),
-  X(READ),
-  X(WRITE),
-  X(UNLINK),
+  X(OPEN) = 1 << 0x1,
+  X(CLOSE) = 2 << 0x1,
+  X(END) = 3 << 0x1,
+  X(READ) = 4 << 0x1,
+  X(WRITE) = 5 << 0x1,
+  X(UNLINK) = 6 << 0x1,
   X(NONE) = ARA_MAX_ENUM
 
 #undef X
@@ -190,7 +190,7 @@ ARA_EXPORT ARAboolean
 ara_clear_error(ara_error_t *err);
 
 ARA_EXPORT ARAchar *
-ara_error(ara_error_code_t code);
+ara_strerror(ara_error_code_t code);
 
 // async
 ARA_EXPORT ara_async_data_t *

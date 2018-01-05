@@ -1,4 +1,5 @@
 #include <ara/ara.h>
+#include <uv.h>
 
 ARA_EXPORT ARAboolean
 ara_set_error(ara_error_t *self, ara_error_code_t code, ARAvoid *data) {
@@ -31,7 +32,8 @@ ara_set_error(ara_error_t *self, ara_error_code_t code, ARAvoid *data) {
 }
 
 ARAchar *
-ara_error(ara_error_code_t code) {
+ara_strerror(ara_error_code_t code) {
+  ARAchar *uverror = 0;
 #define E(code, message) ARA_E##code: return message;
   switch (code) {
     case E(UNKNOWN, "An unknown error has occurred.");
@@ -44,9 +46,15 @@ ara_error(ara_error_code_t code) {
     case E(BADDATA, "Bad data.");
     case E(ACCESS, "No access.");
     case E(NONE, "");
-    default: return "An error has occurred";
+    //  Leaks a few bytes of memory when you call it with an unknown error code.
+    default: uverror = (ARAchar *) uv_strerror(code);
   }
 #undef E
+  if (0 != uverror) {
+    return uverror;
+  } else {
+    return "An error has occurred";
+  }
 }
 
 ARAboolean

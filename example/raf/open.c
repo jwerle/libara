@@ -149,11 +149,11 @@ raf_open(RandomAccessFile *self,
 
   panic(ara_set(&self->ara, ARA_WORK_OPEN, (ara_worker_cb *) ara_work_open),
         "ara: error: '%s'",
-        ara_error(self->ara.error.code));
+        ara_strerror(self->ara.error.code));
 
   panic(ara_open(&self->ara, &data, on_ara_open),
         "ara: error: '%s'",
-        ara_error(self->ara.error.code));
+        ara_strerror(self->ara.error.code));
 
   return ARA_TRUE;
 }
