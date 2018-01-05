@@ -25,10 +25,12 @@ static struct {
   const char *filename;
   ARAuint offset;
   ARAuint length;
+  ARAboolean unlink;
 } opts = {
   .filename = 0,
   .offset = 0,
   .length = BUFSIZ,
+  .unlink = ARA_FALSE,
 };
 
 static struct { ARAuint read, write; } worker_index = {
@@ -75,7 +77,7 @@ onread(RandomAccessFile *self, RandomAccessFileRequest *req) {
 
       ara_buffer_write(&buffer, opts->offset, opts->length, req->buffer->data.base);
 
-      if (self->size == buffer.written) {
+      if (self->size && self->size == buffer.written) {
         ARAchar out[self->size];
         assert(ara_buffer_read(&buffer, 0, self->size, out) > 0);
         out[self->size] = '\0';
@@ -89,71 +91,60 @@ onread(RandomAccessFile *self, RandomAccessFileRequest *req) {
 
 ARAvoid
 onwrite(RandomAccessFile *self, RandomAccessFileRequest *req) {
+  RandomAccessFileWriteOptions *writeopts = req->opts;
+  RandomAccessFileReadOptions *readopts = readopts_next();
+  ARAuint max = cpu_count;
+
+  D("onwrite(): readers=%d", max);
+
+  readopts->length = writeopts->length;
+  readopts->offset = writeopts->offset;
+
+  D("onwrite(): raf_read(): offset=%d length=%d size=%d",
+      readopts->offset, readopts->length, self->size);
+
+  assert(ARA_TRUE == raf_read(self, readopts, onread));
+}
+
+ARAvoid
+onunlink(RandomAccessFile *self, RandomAccessFileRequest *req) {
 }
 
 ARAvoid
 onopen(RandomAccessFile *self, RandomAccessFileRequest *req) {
   D("onopen()");
-  ARAuint max = cpu_count;
 
   if (self->fd > -1) {
     D("onopen(): fd=%d filename=%s size=%d",
         self->fd, self->filename, self->size);
 
-    if (max > self->size) {
-      max = 1;
+    if (ARA_TRUE == opts.unlink) {
+      assert(ARA_TRUE == raf_unlink(self, onunlink));
+      return;
     }
 
-    D("onopen(): readers=%d", max);
-    ara_buffer_init(&buffer, self->size);
-
-    {
-      RandomAccessFileWriteOptions *writeopts = writeopts_next();
-      ARAchar *buf = "hello";
-      ARAsizei size = strlen(buf);
-
-      writeopts->offset = 0;
-      writeopts->length = size;
-      writeopts->buffer = buf;
-
-      assert(ARA_TRUE == raf_write(self, writeopts, onwrite));
+    if (self->size > 0) {
+      ara_buffer_init(&buffer, self->size);
     }
 
-    {
-      RandomAccessFileWriteOptions *writeopts = writeopts_next();
-      ARAchar *buf = "  ";
-      ARAsizei size = strlen(buf);
+#define write(chunk, off, len) do {              \
+  RandomAccessFileWriteOptions *writeopts = 0;   \
+  ARAboolean success = ARA_FALSE;                \
+                                                 \
+  writeopts = writeopts_next();                  \
+  writeopts->offset = off;                       \
+  writeopts->length = len;                       \
+  writeopts->buffer = chunk;                     \
+                                                 \
+  success = raf_write(self, writeopts, onwrite); \
+  assert(ARA_TRUE == success);                   \
+} while (0);                                     \
 
-      writeopts->offset = 5;
-      writeopts->length = size;
-      writeopts->buffer = buf;
+    write("hello", 0, 5);
+    write(" ", 5, 1);
+    write("world", 6, 5);
 
-      assert(ARA_TRUE == raf_write(self, writeopts, onwrite));
-    }
-
-    {
-      RandomAccessFileWriteOptions *writeopts = writeopts_next();
-      ARAchar *buf = "world";
-      ARAsizei size = strlen(buf);
-
-      writeopts->offset = 6j;
-      writeopts->length = size;
-      writeopts->buffer = buf;
-
-      assert(ARA_TRUE == raf_write(self, writeopts, onwrite));
-    }
-
-    return;
-    for (int i = 0; i < max; ++i) {
-      RandomAccessFileReadOptions *readopts = readopts_next();
-
-      readopts->length = ceil((double) self->size / max);
-      readopts->offset = i * readopts->length;
-
-      D("onopen(): raf_read(): offset=%d length=%d size=%d",
-          readopts->offset, readopts->length, self->size);
-      assert(ARA_TRUE == raf_read(self, readopts, onread));
-    }
+#undef write
   } else {
     error = ARA_TRUE;
     D("onopen(): error: '%s' does not exist", self->filename);
@@ -183,6 +174,9 @@ parse_arguments(int argc, const char **argv) {
 
   D("parse_arguments(): flagset_int(): --length");
   flagset_int(flagset, &opts.length, "length", "Range buffer length");
+
+  D("parse_arguments(): flagset_bool(): --unlink");
+  flagset_bool(flagset, (bool *) &opts.unlink, "unlink", "Unlink file");
 
   D("parse_arguments(): flagset_bool(): --help");
   flagset_bool(flagset, &help, "help", "Output this message");

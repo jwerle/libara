@@ -28,6 +28,7 @@ typedef ARAvoid * RandomAccessFileCallback;
   CALLBACK(End)
   CALLBACK(Read)
   CALLBACK(Write)
+  CALLBACK(Unlink)
 
 #undef CALLBACK
 
@@ -142,4 +143,7 @@ raf_write(RandomAccessFile *raf,
           RandomAccessFileWriteOptions *opts,
           RandomAccessFileWriteCallback *callback);
 
+ARAboolean
+raf_unlink(RandomAccessFile *raf,
+           RandomAccessFileUnlinkCallback *callback);
 #endif

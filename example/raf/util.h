@@ -60,41 +60,39 @@
     delete(rafreq);                                         \
   }                                                         \
 
-#define UV_FS_PROCESS_REQ(req, offset, uv_fs_fn, cb) do { \
-  RandomAccessFileRequest *rafreq = 0;                    \
-  ara_async_req_t *areq = 0;                              \
-  ara_buffer_t *buffer = 0;                               \
-  ARAlong nread = 0;                                      \
-                                                          \
-  areq = (ara_async_req_t *) req->data;                   \
-  nread = req->result;                                    \
-  rafreq = (RandomAccessFileRequest *) req;               \
-  buffer = areq->buffer;                                  \
-                                                          \
-  if (nread > 0) {                                        \
-    buffer->data.buffer_mut.len -= nread;                 \
-                                                          \
-    if (buffer->data.buffer_mut.len > 0) {                \
-      ARAsizei delta = (                                  \
-          buffer->data.buffer.len                         \
-        - buffer->data.buffer_mut.len                     \
-      );                                                  \
-      buffer->data.buffer_mut.base += nread;              \
-      uv_fs_req_cleanup(req);                             \
-      uv_fs_fn(rafreq->raf->ara.loop,                     \
-               (uv_fs_t *) req,                           \
-               rafreq->raf->fd,                           \
-               &buffer->data.buffer_mut,  1,              \
-               offset + delta, cb);                       \
-      break;                                              \
-    }                                                     \
-  } else if (0 == nread) {                                \
-    if (buffer->data.buffer_mut.len > 0) {                \
-      req->result = -1;                                   \
-    }                                                     \
-  }                                                       \
-                                                          \
-  on_uv_fs_done(req);                                     \
-} while (0);                                              \
+#define UV_FS_PROCESS_REQ(fs, offset, fn, cb) do {  \
+  RandomAccessFileRequest *rafreq = 0;              \
+  ara_async_req_t *areq = 0;                        \
+  ara_buffer_t *buffer = 0;                         \
+  ARAlong nread = 0;                                \
+                                                    \
+  areq = (ara_async_req_t *) fs->data;              \
+  nread = fs->result;                               \
+  rafreq = (RandomAccessFileRequest *) fs;          \
+  buffer = areq->buffer;                            \
+                                                    \
+  if (nread > 0) {                                  \
+    buffer->data.buffer_mut.len -= nread;           \
+                                                    \
+    if (buffer->data.buffer_mut.len > 0) {          \
+      ARAsizei delta = (                            \
+          buffer->data.buffer.len                   \
+        - buffer->data.buffer_mut.len               \
+      );                                            \
+      buffer->data.buffer_mut.base += nread;        \
+      uv_fs_req_cleanup(fs);                        \
+      fn(rafreq->raf->ara.loop,                     \
+               (uv_fs_t *) fs,                      \
+               rafreq->raf->fd,                     \
+               &buffer->data.buffer_mut,  1,        \
+               offset + delta, cb);                 \
+      return;                                       \
+    }                                               \
+  } else if (0 == nread) {                          \
+    if (buffer->data.buffer_mut.len > 0) {          \
+      fs->result = -1;                              \
+    }                                               \
+  }                                                 \
+} while (0);                                        \
 
 #endif

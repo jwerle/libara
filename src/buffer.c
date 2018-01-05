@@ -103,23 +103,28 @@ ara_buffer_destroy(ara_buffer_t *self) {
 
 ARA_EXPORT ARAuint
 ara_buffer_write(ara_buffer_t *self, ARAuint offset, ARAuint length, ARAvoid *data) {
+  ARAvoid *region = 0;
+
   if (0 == self) {
     return 0;
   }
 
-  if (offset > self->data.length && length > 0) {
-    if (ARA_FALSE == ara_buffer_realloc(self, offset + length)) {
+  if (0 == self->data.base) {
+    if (ARA_FALSE == ara_buffer_init(self, length)) {
       return 0;
     }
   }
 
-  ARAvoid *region = self->data.base;
-
-  if (0 == region) {
-    return 0;
+  if (offset > self->data.length && length > 0) {
+    if (ARA_FALSE == ara_buffer_realloc(self, self->data.length + offset)) {
+      return 0;
+    }
   }
 
+  region = self->data.base;
+
   memcpy(region + offset, data, length);
+
   self->written += length;
   return length;
 }

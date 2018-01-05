@@ -14,13 +14,33 @@ on_uv_fs_done(uv_fs_t *fs) {
 
   panic(fs->result > -1, "uv: error: '%s'", uv_strerror(fs->result));
   uv_fs_req_cleanup(fs);
+
+  D(open, "on_uv_fs_open(): uv_fs_fstat()");
   done(req->ara, req);
 }
 
 static ARAvoid
-on_ara_write(ara_t *ara, ara_async_res_t *res) {
-  D(write, "on_ara_write()");
-  ON_ARA_WORK_DONE(ara, res, RandomAccessFileWriteCallback);
+on_uv_fs_stat(uv_fs_t *fs) {
+  D(open, "on_uv_fs_stat()");
+
+  ara_async_req_t *req = (ara_async_req_t *) fs->data;
+  RandomAccessFileRequest *rafreq = (RandomAccessFileRequest *) req->data.data;
+  RandomAccessFile *raf = rafreq->raf;
+
+  raf->size = 0;
+  raf->atime = 0;
+  raf->mtime = 0;
+
+  if (fs->result > -1) {
+    raf->size = fs->statbuf.st_size;
+    raf->atime = fs->statbuf.st_atim.tv_sec;
+    raf->mtime = fs->statbuf.st_mtim.tv_sec;
+    D(open, "on_uv_fs_stat(): fd=%d size=%d atime=%d mtime=%d",
+      raf->fd, raf->size, raf->atime, raf->mtime);
+  }
+
+  D(open, "on_uv_fs_stat(): on_uv_fs_done()");
+  on_uv_fs_done(fs);
 }
 
 static ARAvoid
@@ -30,7 +50,15 @@ on_uv_fs_write(uv_fs_t *fs) {
   RandomAccessFileRequest *rafreq = (RandomAccessFileRequest *) fs;
   RandomAccessFileWriteOptions *opts = (RandomAccessFileWriteOptions *) rafreq->opts;
 
-  UV_FS_PROCESS_REQ(fs, opts->offset, uv_fs_write, on_uv_fs_write);
+  UV_FS_PROCESS_REQ(fs, opts->offset, uv_fs_write, on_uv_fs_write) {
+    uv_fs_fstat(rafreq->raf->ara.loop, fs, rafreq->raf->fd, on_uv_fs_stat);
+  }
+}
+
+static ARAvoid
+on_ara_write(ara_t *ara, ara_async_res_t *res) {
+  D(write, "on_ara_write()");
+  ON_ARA_WORK_DONE(ara, res, RandomAccessFileWriteCallback);
 }
 
 static ARAvoid

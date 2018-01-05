@@ -30,7 +30,9 @@ on_uv_fs_read(uv_fs_t *fs) {
   RandomAccessFileRequest *rafreq = (RandomAccessFileRequest *) fs;
   RandomAccessFileReadOptions *opts = (RandomAccessFileReadOptions *) rafreq->opts;
 
-  UV_FS_PROCESS_REQ(fs, opts->offset, uv_fs_read, on_uv_fs_read);
+  UV_FS_PROCESS_REQ(fs, opts->offset, uv_fs_read, on_uv_fs_read) {
+    on_uv_fs_done(fs);
+  }
 }
 
 static ARAvoid

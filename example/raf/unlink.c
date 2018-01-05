@@ -6,11 +6,11 @@
 
 static ARAvoid
 on_uv_fs_done(uv_fs_t *fs) {
-  D(close, "on_uv_fs_done()");
+  D(unlink, "on_uv_fs_done()");
 
   ara_async_req_t *req = (ara_async_req_t *) fs->data;
   RandomAccessFileRequest *rafreq = (RandomAccessFileRequest *) req->data.data;
-  ara_close_work_done *done = (ara_close_work_done *) rafreq->done;
+  ara_unlink_work_done *done = (ara_unlink_work_done *) rafreq->done;
   RandomAccessFile *raf = rafreq->raf;
 
   panic(fs->result > -1, "uv: error: '%s'", uv_strerror(fs->result));
@@ -19,8 +19,8 @@ on_uv_fs_done(uv_fs_t *fs) {
 }
 
 static ARAvoid
-on_uv_fs_close(uv_fs_t *fs) {
-  D(close, "on_uv_fs_close()");
+on_uv_fs_unlink(uv_fs_t *fs) {
+  D(unlink, "on_uv_fs_unlink()");
 
   ara_async_req_t *req = (ara_async_req_t *) fs->data;
   RandomAccessFileRequest *rafreq = (RandomAccessFileRequest *) req->data.data;
@@ -30,14 +30,14 @@ on_uv_fs_close(uv_fs_t *fs) {
 }
 
 static ARAvoid
-on_ara_close(ara_t *ara, ara_async_res_t *res) {
-  D(close, "on_ara_close()");
-  ON_ARA_WORK_DONE(ara, res, RandomAccessFileCloseCallback);
+on_ara_unlink(ara_t *ara, ara_async_res_t *res) {
+  D(unlink, "on_ara_unlink()");
+  ON_ARA_WORK_DONE(ara, res, RandomAccessFileUnlinkCallback);
 }
 
 static ARAvoid
-ara_work_close(ara_t *ara, ara_async_req_t *req, ara_open_work_done *done) {
-  D(close, "ara_work_close()");
+ara_work_unlink(ara_t *ara, ara_async_req_t *req, ara_open_work_done *done) {
+  D(unlink, "ara_work_unlink()");
   RandomAccessFileRequest *rafreq = (RandomAccessFileRequest *) req->data.data;
 
   rafreq->fs.data = req;
@@ -45,13 +45,13 @@ ara_work_close(ara_t *ara, ara_async_req_t *req, ara_open_work_done *done) {
 
   panic(rafreq->raf->fd > -1, "uv: error: '%s'", uv_strerror(rafreq->raf->fd));
 
-  D(close, "ara_work_close(): fd=%d filename=%s", rafreq->raf->fd, rafreq->raf->filename);
+  D(unlink, "ara_work_unlink(): fd=%d filename=%s", rafreq->raf->fd, rafreq->raf->filename);
 
-  uv_fs_close(ara->loop, (uv_fs_t *) &rafreq->fs, rafreq->raf->fd, on_uv_fs_close);
+  uv_fs_unlink(ara->loop, (uv_fs_t *) &rafreq->fs, rafreq->raf->filename, on_uv_fs_unlink);
 }
 
 ARAboolean
-raf_close(RandomAccessFile *self, RandomAccessFileCloseCallback *callback) {
+raf_unlink(RandomAccessFile *self, RandomAccessFileUnlinkCallback *callback) {
   static ara_async_data_t data = {0};
   RandomAccessFileRequest *req = 0;
 
@@ -63,14 +63,14 @@ raf_close(RandomAccessFile *self, RandomAccessFileCloseCallback *callback) {
 
   data.data = req;
 
-  panic(ara_set(&self->ara, ARA_WORK_CLOSE, (ara_worker_cb *) ara_work_close),
+  panic(ara_set(&self->ara, ARA_WORK_UNLINK, (ara_worker_cb *) ara_work_unlink),
         "ara: error: '%s'",
         ara_strerror(self->ara.error.code));
 
-  panic(ara_close(&self->ara, &data, on_ara_close),
+  panic(ara_unlink(&self->ara, &data, on_ara_unlink),
         "ara: error: '%s'",
         ara_strerror(self->ara.error.code));
 
-  D(close, "raf_close() fd=%d filename=%s", self->fd, self->filename);
+  D(unlink, "raf_unlink() fd=%d filename=%s", self->fd, self->filename);
   return ARA_TRUE;
 }
