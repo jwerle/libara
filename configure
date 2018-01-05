@@ -14,9 +14,20 @@ declare -i DOTWIDTH=50
 declare LIBRARY_NAME="ara"
 
 ## Library version
-declare -i VERSION_MAJOR=0
-declare -i VERSION_MINOR=1
-declare -i VERSION_PATCH=1
+function semver() {
+  cat package.json |     \
+    grep '"version":' |  \
+    tr -d '"version":' | \
+    tr -d ',' |          \
+    tr -d '[:space:]' |  \
+    tr '.' '\t' |        \
+    awk '{print $3}' |   \
+    tr -d '[:space:]'
+  return $?
+}
+declare -i VERSION_MAJOR=$(semver 0)
+declare -i VERSION_MINOR=$(semver 1)
+declare -i VERSION_PATCH=$(semver 2)
 declare -i VERSION_REVISION=1
 
 ## Script name
@@ -390,7 +401,6 @@ function configure {
 
   case "$OS" in
     Linux|Unix|GNU|*BSD|Darwin)
-      src $(ls src/os/unix/*.c)
       ;;
 
     Win32) ;;

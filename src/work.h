@@ -7,8 +7,6 @@
   ara_throw(self, code);       \
   WORK_ERROR(self);            \
 
-/**
- */
 #define WORK(self, type, req, data, begin, end)      \
   if (0 == self) {                                   \
     WORK_ERROR(self);                                \

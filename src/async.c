@@ -1,7 +1,7 @@
 #include <ara/ara.h>
 #include <stdlib.h>
 #include <string.h>
-#include "async.h"
+#include <uv.h>
 
 static void
 on_uv_async_send(uv_async_t *handle) {

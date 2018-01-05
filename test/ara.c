@@ -3,7 +3,7 @@
 #include <ara/ara.h>
 #include <uv.h>
 
-static void
+static ARAvoid
 ara_work_open(ara_t *ara, ara_work_done *done) { }
 
 int
