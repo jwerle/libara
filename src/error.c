@@ -33,8 +33,9 @@ ara_set_error(ara_error_t *self, ara_error_code_t code, ARAvoid *data) {
 
 ARAchar *
 ara_strerror(ara_error_code_t code) {
-  ARAchar *uverror = 0;
-#define E(code, message) ARA_E##code: return message;
+  ARAchar * uverrstr = 0;
+  uv_err_t uverr = {0};
+#define E(code, message) ARA_E##code: return message
   switch (code) {
     case E(UNKNOWN, "An unknown error has occurred.");
     case E(NOMEM, "Out of memory.");
@@ -47,11 +48,13 @@ ara_strerror(ara_error_code_t code) {
     case E(ACCESS, "No access.");
     case E(NONE, "");
     //  Leaks a few bytes of memory when you call it with an unknown error code.
-    default: uverror = (ARAchar *) uv_strerror(code);
+    default: 
+      uverr.code = code;
+      uverrstr = (ARAchar*) uv_strerror( uverr );
   }
 #undef E
-  if (0 != uverror) {
-    return uverror;
+  if (0 != uverrstr) {
+    return uverrstr;
   } else {
     return "An error has occurred";
   }
