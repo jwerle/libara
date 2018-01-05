@@ -9,3 +9,4 @@ test/read
 test/write
 test/unlink
 example/raf/raf
+example/simple/simple

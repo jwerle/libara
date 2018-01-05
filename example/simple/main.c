@@ -1,21 +1,3 @@
-libara
-======
-
-## Abstract
-
-TODO
-
-## Installation
-
-TODO
-
-## API
-
-TODO
-
-## Example
-
-```c
 #include <ara/ara.h>
 #include <assert.h>
 #include <stdlib.h>
@@ -28,6 +10,7 @@ static uv_loop_t *loop = 0;
 static ara_t ara = {0};
 
 void onopen(ara_t *ara, ara_async_req_t *req, ara_open_work_done *done) {
+  printf("onopen()\n");
   static ara_async_data_t data = {0};
   data.offset = 32;
   data.length = 16;
@@ -37,6 +20,7 @@ void onopen(ara_t *ara, ara_async_req_t *req, ara_open_work_done *done) {
 }
 
 void onwrite(ara_t*ara, ara_async_req_t *req, ara_open_work_done *done) {
+  printf("onwrite()\n");
   static ara_async_data_t data = {0};
   data.offset = req->data.offset;
   data.length = req->data.length;
@@ -48,6 +32,7 @@ void onwrite(ara_t*ara, ara_async_req_t *req, ara_open_work_done *done) {
 void onread(ara_t*ara, ara_async_req_t *req, ara_open_work_done *done) {
   ara_async_data_t *data = &req->data;
   ARAchar out[data->length - 5];
+  printf("onread(): offset=%d length=%d\n", data->offset, data->length);
   ara_buffer_read(&buffer, data->offset, data->length, out);
   out[data->length] = '\0';
   printf("%s\n", out);
@@ -56,6 +41,7 @@ void onread(ara_t*ara, ara_async_req_t *req, ara_open_work_done *done) {
 }
 
 void onclose(ara_t*ara, ara_async_req_t *req, ara_open_work_done *done) {
+  printf("onclose()\n");
   done(ara, req);
 }
 
@@ -78,8 +64,3 @@ main(void) {
 
   return 0;
 }
-```
-
-## License
-
-MIT
