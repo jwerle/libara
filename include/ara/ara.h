@@ -148,20 +148,11 @@ ARAvoid
 ara_noop_cb(ara_async_res_t *res);
 
 // async
-ARA_EXPORT ara_async_data_t *
-ara_async_data_new();
-
 ARA_EXPORT ARAboolean
 ara_async_data_init();
 
-ARA_EXPORT ARAvoid
-ara_async_data_destroy(ara_async_data_t *data);
-
 ARA_EXPORT ara_async_req_t *
 ara_async_req_new(ara_t *ara, ara_async_req_cb *onreq, ara_async_res_cb *onres);
-
-ARA_EXPORT ara_async_res_t *
-ara_async_res_new(ara_t *ara, ara_async_res_cb *cb);
 
 ARA_EXPORT ARAboolean
 ara_async_req_init(ara_async_req_t *req, ara_t *ara, ara_async_req_cb *cb);

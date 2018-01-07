@@ -22,29 +22,6 @@ on_uv_close(uv_handle_t *handle) {
   ara_async_req_destroy(req);
 }
 
-ara_async_data_t *
-ara_async_data_new() {
-  ara_async_data_t *self = 0;
-  self = (ara_async_data_t *) malloc(sizeof(ara_async_data_t));
-
-  if (ARA_FALSE == ara_async_data_init(self)) {
-    goto error;
-  }
-
-  self->alloc = self;
-
-  return self;
-
-error:
-
-  if (self) {
-    ara_async_data_destroy(self);
-    self = 0;
-  }
-
-  return self;
-}
-
 ARAboolean
 ara_async_data_init(ara_async_data_t *self) {
   if (0 == self) { return ARA_FALSE; }
@@ -53,16 +30,6 @@ ara_async_data_init(ara_async_data_t *self) {
   self->alloc = 0;
   self->data = 0;
   return ARA_TRUE;
-}
-
-ARAvoid
-ara_async_data_destroy(ara_async_data_t *self) {
-  if (0 == self) { return; }
-  if (self == self->alloc) {
-    self->alloc = 0;
-    free(self);
-    self = 0;
-  }
 }
 
 ara_async_req_t *
