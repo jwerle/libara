@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "repo": "jwerle/libara",
   "keywords": [],
+  "description": "libara is a library for constructing random access memory interfaces.",
   "install": "configure && make && make install",
   "development": {
     "stephenmathieson/assertion-macros.h": "0.3.1",
