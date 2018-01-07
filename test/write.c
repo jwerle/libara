@@ -21,48 +21,48 @@ static const struct Range range[] = {
 };
 
 static void
-onclose(ara_t *ara, ara_async_res_t *res) {
+onclose(ara_async_res_t *res) {
   (void) ++called.close;
-  describe("onclose(ara_t *ara, ara_async_res_t *res);") {
+  describe("onclose(ara_async_res_t *res);") {
     it("should expose ara with an 'ARA_STATUS_CLOSED' status set.") {
-      assert(ARA_STATUS_CLOSED == ara->status);
+      assert(ARA_STATUS_CLOSED == res->ara->status);
     }
   }
 }
 
 static void
-onwrite(ara_t *ara, ara_async_res_t *res) {
+onwrite(ara_async_res_t *res) {
   (void) ++called.write;
-  describe("onwrite(ara_t *ara, ara_async_res_t *res);") {
-    assert(ARA_TRUE == ara_close(ara, 0, onclose));
+  describe("onwrite(ara_async_res_t *res);") {
+    assert(ARA_TRUE == ara_close(res->ara, 0, onclose));
   }
 }
 
 static void
-ara_work_open(ara_t *ara, ara_async_req_t *req, ara_work_done *done) {
+ara_work_open(ara_async_req_t *req, ara_done_cb *done) {
   (void) ++called.work;
-  describe("ara_work_open(ara_t *ara, ara_work_done *done);") {
+  describe("ara_work_open(ara_async_req_t *req, ara_done_cb *done);") {
     it("should expose ara with an 'ARA_STATUS_OPENING' status set.") {
-      assert(ARA_STATUS_OPENING == ara->status);
+      assert(ARA_STATUS_OPENING == req->ara->status);
     }
   }
-  done(ara, req);
+  done(req);
 }
 
 static void
-ara_work_close(ara_t *ara, ara_async_req_t *req, ara_work_done *done) {
+ara_work_close(ara_async_req_t *req, ara_done_cb *done) {
   (void) ++called.work;
-  describe("ara_work_close(ara_t *ara, ara_work_done *done);") {
+  describe("ara_work_close(ara_async_req_t *req, ara_done_cb *done);") {
     it("should expose ara with an 'ARA_STATUS_CLOSING' status set.") {
-      assert(ARA_STATUS_CLOSING == ara->status);
+      assert(ARA_STATUS_CLOSING == req->ara->status);
     }
   }
 
-  done(ara, req);
+  done(req);
 }
 
 static void
-ara_work_write(ara_t *ara, ara_async_req_t *req, ara_write_work_done *done) {
+ara_work_write(ara_async_req_t *req, ara_done_cb *done) {
   (void) ++called.work;
   const ARAuint offset = req->data.offset;
   const ARAuint length = req->data.length;
@@ -92,34 +92,36 @@ ara_work_write(ara_t *ara, ara_async_req_t *req, ara_write_work_done *done) {
     sleep(1);
   }
 
-  done(ara, req);
+  done(req);
 }
 
 static void
-onopen(ara_t *ara, ara_async_res_t *res) {
+onopen(ara_async_res_t *res) {
   (void) ++called.open;
 
-  describe("onopen(ara_t *ara, ara_async_res_t *res);") {
+  describe("onopen(ara_async_res_t *res);") {
     it("should expose ara with an 'ARA_STATUS_OPENED' status set.") {
-      assert(ARA_STATUS_OPENED == ara->status);
+      assert(ARA_STATUS_OPENED == res->ara->status);
     }
   }
 
-  describe("ARAboolean ara_write(ara_t *self, ARAuint offset, ARAuint length, ara_write_cb *cb);") {
-    it("should return 'ARA_FALSE' when 'ARA_WORK_WRITE' bit is not set.") {
-      assert(ARA_FALSE == ara_write(ara, 0, 0));
-      assert(ARA_ENOCALLBACK == ara->error.code);
+  describe("ARAboolean ara_write(ara_t *self, ara_async_data_t *data, ara_cb *cb);") {
+    it("should return 'ARA_FALSE' when 'ARA_WRITE' bit is not set.") {
+      assert(ARA_FALSE == ara_write(res->ara, 0, 0));
+      assert(ARA_ENOCALLBACK == res->ara->error.code);
     }
 
-    it("should return 'ARA_TRUE' when 'ara_write_cb' set.") {
+    it("should return 'ARA_TRUE' when 'ara_cb' set.") {
       ara_async_data_t data = {0};
-      assert(ARA_TRUE == ara_set(ara, ARA_WORK_WRITE, (ara_worker_cb) ara_work_write));
+      assert(ARA_TRUE == ara_set(res->ara, ARA_WRITE, ara_work_write));
 
-      data.offset = range[0].offset; data.length = range[0].length;
-      assert(ARA_TRUE == ara_write(ara, &data, onwrite));
+      data.offset = range[0].offset;
+      data.length = range[0].length;
+      assert(ARA_TRUE == ara_write(res->ara, &data, onwrite));
 
-      data.offset = range[1].offset; data.length = range[1].length;
-      assert(ARA_TRUE == ara_write(ara, &data, onwrite));
+      data.offset = range[1].offset;
+      data.length = range[1].length;
+      assert(ARA_TRUE == ara_write(res->ara, &data, onwrite));
     }
   }
 }
@@ -134,7 +136,7 @@ main(void) {
   called.close = 0;
   called.write = 0;
 
-  describe("ARAboolean ara_write(ara_t *self, ara_async_data_t *data, ara_write_cb *cb);") {
+  describe("ARAboolean ara_write(ara_t *self, ara_async_data_t *data, ara_cb *cb);") {
     it("should return 'ARA_FALSE' on 'NULL' 'ara_t' pointer.") {
       assert(ARA_FALSE == ara_write(0, 0, 0));
     }
@@ -150,8 +152,8 @@ main(void) {
       assert(ARA_EBADSTATE == ara.error.code);
     }
 
-    assert(ARA_TRUE == ara_set(&ara, ARA_WORK_OPEN, (ara_worker_cb) ara_work_open));
-    assert(ARA_TRUE == ara_set(&ara, ARA_WORK_CLOSE, (ara_worker_cb) ara_work_close));
+    assert(ARA_TRUE == ara_set(&ara, ARA_OPEN, ara_work_open));
+    assert(ARA_TRUE == ara_set(&ara, ARA_CLOSE, ara_work_close));
     assert(ARA_TRUE == ara_open(&ara, 0, onopen));
   }
 

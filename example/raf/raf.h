@@ -57,7 +57,7 @@ enum RandomAccessFileFlags {
 
 struct RandomAccessFileRequest {
   uv_fs_t fs;
-  ara_work_done *done;
+  ara_done_cb *done;
   ara_buffer_t *buffer;
   RandomAccessFile *raf;
   RandomAccessFileFlags flags;

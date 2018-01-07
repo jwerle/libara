@@ -5,20 +5,17 @@
 #include "work.h"
 
 static ARAvoid
-read_work_noop(ara_t *self, ara_async_res_t *res) {
-  (ARAvoid) (self); (ARAvoid) (res);
+on_async_end(ara_async_res_t *res) {
+  (ARAvoid) (res);
 }
 
 static ARAvoid
-on_async_end(ara_t *self, ara_async_res_t *res) {
-  (ARAvoid) (self); (ARAvoid) (res);
-}
-
-static ARAvoid
-on_done(ara_t *self, ara_async_req_t *req) {
-  if (0 == self || 0 == req) {
+on_done(ara_async_req_t *req) {
+  if (0 == req || 0 == req->ara) {
     return;
   }
+
+  ara_t *self = req->ara;
 
   if (self->error.code < ARA_ENONE) {
     goto end;
@@ -29,10 +26,10 @@ on_done(ara_t *self, ara_async_req_t *req) {
     goto end;
   }
 
-  ara_open_cb *cb = (ara_open_cb *) req->data.callback;
+  ara_cb *callback = (ara_cb *) req->data.callback;
 
-  if (cb) {
-    cb(self, &req->res);
+  if (callback) {
+    callback(&req->res);
   }
 
 end:
@@ -40,28 +37,31 @@ end:
 }
 
 static ARAvoid
-on_async_begin(ara_t *self, ara_async_req_t *req) {
-  if (0 == self) {
+on_async_begin(ara_async_req_t *req) {
+  if (0 == req || 0 == req->ara) {
     return;
   }
 
-  if (0 == (self->bitfield.work & ARA_WORK_READ)) {
+  ara_t *self = req->ara;
+
+  if (0 == (self->bitfield.work & ARA_READ)) {
     ara_throw(self, ARA_ENOCALLBACK);
     return;
   }
 
   switch (self->status) {
     case ARA_STATUS_OPENED:
-      return self->read(self, req, &on_done);
+      ara_call(self, ARA_READ, req, &on_done);
+      return;
 
     default:
       ara_throw(self, ARA_EBADSTATE);
-      return on_done(self, req);
+      return on_done(req);
   }
 }
 
 ARAboolean
-ara_read(ara_t *self, ara_async_data_t *data, ara_read_cb *cb) {
+ara_read(ara_t *self, ara_async_data_t *data, ara_cb *callback) {
   ara_async_req_t *req = 0;
   ara_async_data_t empty = {0};
 
@@ -70,21 +70,21 @@ ara_read(ara_t *self, ara_async_data_t *data, ara_read_cb *cb) {
     data = &empty;
   }
 
-  if (0 == cb) {
-    cb = read_work_noop;
+  if (0 == callback) {
+    data->callback = ara_noop_cb;
+  } else {
+    data->callback = callback;
   }
 
   if (self) {
     switch (self->status) {
       case ARA_STATUS_OPENED:
+        WORK(self, ARA_READ, req, data, on_async_begin, on_async_end);
         break;
 
-      default:
-        WORK_THROW(self, ARA_EBADSTATE);
+      default: WORK_THROW(self, ARA_EBADSTATE);
     }
   }
 
-  data->callback = cb;
-
-  WORK(self, ARA_WORK_READ, req, data, on_async_begin, on_async_end);
+  return ARA_FALSE;
 }

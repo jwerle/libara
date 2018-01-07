@@ -47,7 +47,7 @@
   }                                            \
 })                                             \
 
-#define ON_ARA_WORK_DONE(ara, res, Callback)                \
+#define ON_ARA_WORK_DONE(res, Callback)                     \
   RandomAccessFileRequest *rafreq = 0;                      \
   rafreq = (RandomAccessFileRequest *) res->req->data.data; \
   if (rafreq) {                                             \

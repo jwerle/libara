@@ -10,42 +10,41 @@ static struct {
 } called = {0};
 
 static void
-onend(ara_t *ara, ara_async_res_t *res) {
+onend(ara_async_res_t *res) {
   (void) ++called.end;
-  uv_stop(ara->loop);
 }
 
 static void
-onopen(ara_t *ara, ara_async_res_t *res) {
+onopen(ara_async_res_t *res) {
   (void) ++called.open;
-  describe("onopen(ara_t *ara);") {
+  describe("onopen(ara_async_res_t *res);") {
     it("should expose ara with an 'ARA_STATUS_OPENED' status set.") {
-      assert(ARA_STATUS_OPENED == ara->status);
+      assert(ARA_STATUS_OPENED == res->ara->status);
     }
   }
 
-  describe("ARAboolean ara_end(ara_t *self, ara_async_res_t *res, ara_end_cb *cb);") {
-    it("should return 'ARA_TRUE' even if 'ara_end_cb' set.") {
-      assert(ARA_TRUE == ara_end(ara, 0, onend));
+  describe("ARAboolean ara_end(ara_t *self, ara_async_data_t *data, ara_cb *cb);") {
+    it("should return 'ARA_TRUE' even if 'ara_cb' set.") {
+      assert(ARA_TRUE == ara_end(res->ara, 0, onend));
     }
   }
 }
 
 static void
-ara_work_open(ara_t *ara, ara_async_req_t *req, ara_work_done *done) {
+ara_work_open(ara_async_req_t *req, ara_done_cb *done) {
   (void) ++called.work;
-  describe("ara_work_open(ara_t *ara, ara_work_done *done);") {
+  describe("ara_work_open(ara_async_req_t *req, ara_done_cb *done);") {
     it("should expose ara with an 'ARA_STATUS_OPENING' status set.") {
-      assert(ARA_STATUS_OPENING == ara->status);
+      assert(ARA_STATUS_OPENING == req->ara->status);
     }
   }
-  done(ara, req);
+  done(req);
 }
 
 static void
-ara_work_end(ara_t *ara, ara_async_req_t *req, ara_work_done *done) {
+ara_work_end(ara_async_req_t *req, ara_done_cb *done) {
   (void) ++called.work;
-  done(ara, req);
+  done(req);
 }
 
 int
@@ -53,7 +52,7 @@ main(void) {
   ara_t ara = {0};
   uv_loop_t *loop = uv_default_loop();
 
-  describe("ARAboolean ara_end(ara_t *self, ara_async_res_t *res, ara_end_cb *cb);") {
+  describe("ARAboolean ara_end(ara_t *self, ara_async_data_t *data, ara_cb *cb);") {
     it("should return 'ARA_FALSE' on 'NULL' 'ara_t' pointer.") {
       assert(ARA_FALSE == ara_end(0, 0, 0));
     }
@@ -64,16 +63,16 @@ main(void) {
 
     assert(ARA_TRUE == ara_init(&ara));
 
-    it("should return 'ARA_FALSE' when 'ARA_WORK_END' bit is not set.") {
+    it("should return 'ARA_FALSE' when 'ARA_END' bit is not set.") {
       assert(ARA_FALSE == ara_end(&ara, 0, 0));
     }
 
-    it("should return 'ARA_FALSE' even if 'ara_end_cb' set.") {
-      assert(ARA_TRUE == ara_set(&ara, ARA_WORK_END, (ara_worker_cb) ara_work_end));
+    it("should return 'ARA_FALSE' even if 'ara_cb' set.") {
+      assert(ARA_TRUE == ara_set(&ara, ARA_END, ara_work_end));
       assert(ARA_FALSE == ara_end(&ara, 0, onend));
     }
 
-    assert(ARA_TRUE == ara_set(&ara, ARA_WORK_OPEN, (ara_worker_cb) ara_work_open));
+    assert(ARA_TRUE == ara_set(&ara, ARA_OPEN, ara_work_open));
     assert(ARA_TRUE == ara_open(&ara, 0, onopen));
   }
 

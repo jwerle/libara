@@ -10,10 +10,9 @@ on_uv_async_send(uv_async_t *handle) {
   }
 
   ara_async_req_t *req = (ara_async_req_t *) handle->data;
-  ara_t *ara = req->ara;
 
   if (req->callback) {
-    req->callback(ara, req);
+    req->callback(req);
   }
 }
 
@@ -185,7 +184,7 @@ ara_async_req_end(ara_async_req_t *self) {
   }
 
   if (0 != self->res.callback) {
-    self->res.callback(self->ara, &self->res);
+    self->res.callback(&self->res);
   }
 
   uv_close((uv_handle_t *) &self->handle, on_uv_close);

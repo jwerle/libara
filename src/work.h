@@ -1,6 +1,8 @@
 #ifndef ARA_WORK_H
 #define ARA_WORK_H
 
+#include <ara/ara.h>
+
 #define WORK_ERROR(self) goto error;
 
 #define WORK_THROW(self, code) \

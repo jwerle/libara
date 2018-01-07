@@ -14,12 +14,7 @@ ara_init(ara_t *self) {
   self->error.data = 0;
   self->loop = uv_default_loop();
 
-  self->open = 0;
-  self->close = 0;
-  self->end = 0;
-  self->read = 0;
-  self->write = 0;
-  self->unlink = 0;
+  memset(self->work, 0, ARA_MAX_WORK * sizeof(ara_work_cb *));
 
   return ARA_TRUE;
 }
@@ -33,22 +28,12 @@ ara_set_loop(ara_t *self, uv_loop_t *loop) {
 }
 
 ARAboolean
-ara_set(ara_t *self, ara_work_t type, ara_worker_cb *cb) {
+ara_set(ara_t *self, ara_work_t type, ara_work_cb *cb) {
   if (0 == self) { return ARA_FALSE; }
   if (0 == cb) { return ARA_FALSE; }
 
-  switch (type) {
-#define SET(which)  self->which = (ara_##which##_work *) cb;
-
-    case ARA_WORK_OPEN: SET(open); break;
-    case ARA_WORK_CLOSE: SET(close); break;
-    case ARA_WORK_END: SET(end); break;
-    case ARA_WORK_READ: SET(read); break;
-    case ARA_WORK_WRITE: SET(write); break;
-    case ARA_WORK_UNLINK: SET(unlink); break;
-    default: return ARA_FALSE;
-
-#undef SET
+  if (type < ARA_MAX_WORK) {
+    self->work[type] = cb;
   }
 
   ara_clear_error(&self->error);
@@ -60,4 +45,39 @@ ARAboolean
 ara_throw(ara_t *self, ara_error_code_t code) {
   ara_set_error(&self->error, code, ara_strerror(code));
   return ARA_FALSE;
+}
+
+ARAboolean
+ara_call(ara_t *self, ara_work_t type, ara_async_req_t *req, ara_done_cb *done) {
+  ara_work_cb *cb = 0;
+  if (0 == self) { return ARA_FALSE; }
+  if (0 == done) { return ARA_FALSE; }
+  if (0 == type) { return ARA_FALSE; }
+  if (0 == req) { return ARA_FALSE; }
+  cb = self->work[type];
+  if (cb) {
+    cb(req, done);
+    return ARA_TRUE;
+  }
+  return ARA_FALSE;
+}
+
+ARAchar *
+ara_status_string(ara_t *self) {
+  if (0 == self) { return 0; }
+  return ara_strstatus(self->status);
+}
+
+ARAchar *
+ara_strstatus(ara_status_t status) {
+#define X(x) ARA_STATUS_##x
+  switch (status) {
+    case X(INIT): return "init";
+    case X(OPENING): return "opening";
+    case X(OPENED): return "opened";
+    case X(CLOSING): return "closed";
+    case X(CLOSED): return "closed";
+    default: return "unknown";
+  }
+#undef X
 }

@@ -9,18 +9,18 @@ on_uv_fs_done(uv_fs_t *fs) {
   D(read, "on_uv_fs_done()");
   ara_async_req_t *req = (ara_async_req_t *) fs->data;
   RandomAccessFileRequest *rafreq = (RandomAccessFileRequest *) req->data.data;
-  ara_open_work_done *done = (ara_open_work_done *) rafreq->done;
+  ara_done_cb *done = (ara_done_cb *) rafreq->done;
   RandomAccessFile *raf = rafreq->raf;
 
   panic(fs->result > -1, "uv: error: '%s'", uv_strerror(fs->result));
   uv_fs_req_cleanup(fs);
-  done(req->ara, req);
+  done(req);
 }
 
 static ARAvoid
-on_ara_read(ara_t *ara, ara_async_res_t *res) {
+on_ara_read(ara_async_res_t *res) {
   D(read, "on_ara_read()");
-  ON_ARA_WORK_DONE(ara, res, RandomAccessFileReadCallback);
+  ON_ARA_WORK_DONE(res, RandomAccessFileReadCallback);
 }
 
 static ARAvoid
@@ -36,7 +36,7 @@ on_uv_fs_read(uv_fs_t *fs) {
 }
 
 static ARAvoid
-ara_work_read(ara_t *ara, ara_async_req_t *req, ara_open_work_done *done) {
+ara_work_read(ara_async_req_t *req, ara_done_cb *done) {
   D(read, "ara_work_read()");
 
   RandomAccessFileRequest *rafreq = (RandomAccessFileRequest *) req->data.data;
@@ -59,7 +59,7 @@ ara_work_read(ara_t *ara, ara_async_req_t *req, ara_open_work_done *done) {
   D(read, "ara_work_read(): uv_fs_read(): fd=%d filename=%s offset=%d length=%d",
       raf->fd, raf->filename, opts->offset, buffer->data.buffer_mut.len);
 
-  uv_fs_read(ara->loop,
+  uv_fs_read(req->ara->loop,
             (uv_fs_t *) rafreq,
             raf->fd,
             &(buffer->data.buffer_mut),
@@ -106,7 +106,7 @@ raf_read(RandomAccessFile *self,
   data.data = req;
   data.length = opts->length;
 
-  panic(ara_set(&self->ara, ARA_WORK_READ, (ara_worker_cb *) ara_work_read),
+  panic(ara_set(&self->ara, ARA_READ, ara_work_read),
         "ara: error: '%s'", ara_strerror(self->ara.error.code));
 
   panic(ara_read(&self->ara, &data, on_ara_read),

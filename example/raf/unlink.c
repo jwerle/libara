@@ -10,12 +10,12 @@ on_uv_fs_done(uv_fs_t *fs) {
 
   ara_async_req_t *req = (ara_async_req_t *) fs->data;
   RandomAccessFileRequest *rafreq = (RandomAccessFileRequest *) req->data.data;
-  ara_unlink_work_done *done = (ara_unlink_work_done *) rafreq->done;
+  ara_done_cb *done = (ara_done_cb *) rafreq->done;
   RandomAccessFile *raf = rafreq->raf;
 
   panic(fs->result > -1, "uv: error: '%s'", uv_strerror(fs->result));
   uv_fs_req_cleanup(fs);
-  done(req->ara, req);
+  done(req);
 }
 
 static ARAvoid
@@ -30,13 +30,13 @@ on_uv_fs_unlink(uv_fs_t *fs) {
 }
 
 static ARAvoid
-on_ara_unlink(ara_t *ara, ara_async_res_t *res) {
-  D(unlink, "on_ara_unlink()");
-  ON_ARA_WORK_DONE(ara, res, RandomAccessFileUnlinkCallback);
+onunlink(ara_async_res_t *res) {
+  D(unlink, "onunlink()");
+  ON_ARA_WORK_DONE(res, RandomAccessFileUnlinkCallback);
 }
 
 static ARAvoid
-ara_work_unlink(ara_t *ara, ara_async_req_t *req, ara_open_work_done *done) {
+ara_work_unlink(ara_async_req_t *req, ara_done_cb *done) {
   D(unlink, "ara_work_unlink()");
   RandomAccessFileRequest *rafreq = (RandomAccessFileRequest *) req->data.data;
 
@@ -47,7 +47,7 @@ ara_work_unlink(ara_t *ara, ara_async_req_t *req, ara_open_work_done *done) {
 
   D(unlink, "ara_work_unlink(): fd=%d filename=%s", rafreq->raf->fd, rafreq->raf->filename);
 
-  uv_fs_unlink(ara->loop, (uv_fs_t *) &rafreq->fs, rafreq->raf->filename, on_uv_fs_unlink);
+  uv_fs_unlink(req->ara->loop, (uv_fs_t *) &rafreq->fs, rafreq->raf->filename, on_uv_fs_unlink);
 }
 
 ARAboolean
@@ -63,11 +63,11 @@ raf_unlink(RandomAccessFile *self, RandomAccessFileUnlinkCallback *callback) {
 
   data.data = req;
 
-  panic(ara_set(&self->ara, ARA_WORK_UNLINK, (ara_worker_cb *) ara_work_unlink),
+  panic(ara_set(&self->ara, ARA_UNLINK, ara_work_unlink),
         "ara: error: '%s'",
         ara_strerror(self->ara.error.code));
 
-  panic(ara_unlink(&self->ara, &data, on_ara_unlink),
+  panic(ara_unlink(&self->ara, &data, onunlink),
         "ara: error: '%s'",
         ara_strerror(self->ara.error.code));
 

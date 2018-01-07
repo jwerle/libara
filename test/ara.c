@@ -1,10 +1,9 @@
 #include <describe/describe.h>
-
 #include <ara/ara.h>
 #include <uv.h>
 
 static ARAvoid
-ara_work_open(ara_t *ara, ara_work_done *done) { }
+ara_work_open(ara_async_req_t *req, ara_done_cb *done) { done(req); }
 
 int
 main(void) {
@@ -58,7 +57,7 @@ main(void) {
     }
   }
 
-  describe("ARAboolean ara_set(ara_t *self, ara_work_t type, ara_worker_cb *cb);") {
+  describe("ARAboolean ara_set(ara_t *self, ara_work_t type, ara_work_cb *cb);") {
     it("should return 'ARA_FALSE' on 'NULL' 'ara_t' pointer.") {
       assert(ARA_FALSE == ara_set(0, 0, 0));
     }
@@ -67,12 +66,12 @@ main(void) {
       assert(ARA_FALSE == ara_set(&ara, 0, 0));
     }
 
-    it("should return 'ARA_FALSE' on 'NULL' 'ara_worker_cb' pointer.") {
-      assert(ARA_FALSE == ara_set(&ara, ARA_WORK_OPEN, 0));
+    it("should return 'ARA_FALSE' on 'NULL' 'ara_work_cb' pointer.") {
+      assert(ARA_FALSE == ara_set(&ara, ARA_OPEN, 0));
     }
 
     it("should return 'ARA_TRUE' when setting correct work type.") {
-      assert(ARA_TRUE == ara_set(&ara, ARA_WORK_OPEN, (ara_worker_cb) &ara_work_open));
+      assert(ARA_TRUE == ara_set(&ara, ARA_OPEN, &ara_work_open));
     }
   }
 

@@ -7,102 +7,57 @@ extern "C" {
 
 #include <uv.h>
 #include "common.h"
+#include "error.h"
 
-#define ARA_MAX_CALLBACKS 32
-
-typedef struct ara ara_t;
-typedef struct ara_error ara_error_t;
-typedef struct ara_buffer ara_buffer_t;
 typedef struct ara_async_data ara_async_data_t;
 typedef struct ara_async_req ara_async_req_t;
 typedef struct ara_async_res ara_async_res_t;
+typedef struct ara_buffer ara_buffer_t;
+typedef struct ara ara_t;
 
-typedef enum ara_error_code ara_error_code_t;
 typedef enum ara_status ara_status_t;
 typedef enum ara_work ara_work_t;
 
-typedef ARAvoid * ara_worker_cb;
+typedef ARAvoid (ara_async_req_cb)(ara_async_req_t *req);
+typedef ARAvoid (ara_async_res_cb)(ara_async_res_t *res);
 
-typedef ARAvoid (ara_async_req_cb)(ara_t *ara, ara_async_req_t *req);
-typedef ARAvoid (ara_async_res_cb)(ara_t *ara, ara_async_res_t *res);
+typedef ARAvoid (ara_done_cb)(ara_async_req_t *req);
+typedef ARAvoid (ara_work_cb)(ara_async_req_t *req, ara_done_cb *done);
+typedef ARAvoid (ara_cb)(ara_async_res_t *res);
 
-typedef ARAvoid (ara_work_done)(ara_t *ara, ara_async_req_t *req);
-typedef ARAvoid (ara_work_cb)(ara_t *ara, ara_async_res_t *res);
-
-typedef ARAvoid (ara_open_work_done)(ara_t *ara, ara_async_req_t *req);
-typedef ARAvoid (ara_open_work)(ara_t *ara, ara_async_req_t *req, ara_work_done *done);
-typedef ARAvoid (ara_open_cb)(ara_t *ara, ara_async_res_t *res);
-
-typedef ARAvoid (ara_close_work_done)(ara_t *ara, ara_async_req_t *req);
-typedef ARAvoid (ara_close_work)(ara_t *ara, ara_async_req_t *req, ara_work_done *done);
-typedef ARAvoid (ara_close_cb)(ara_t *ara, ara_async_res_t *res);
-
-typedef ARAvoid (ara_end_work_done)(ara_t *ara,  ara_async_req_t *req);
-typedef ARAvoid (ara_end_work)(ara_t *ara, ara_async_req_t *req, ara_work_done *done);
-typedef ARAvoid (ara_end_cb)(ara_t *ara, ara_async_res_t *res);
-
-typedef ARAvoid (ara_read_work_done)(ara_t *ara, ara_async_req_t *req);
-typedef ARAvoid (ara_read_work)(ara_t *ara, ara_async_req_t *req, ara_work_done *done);
-typedef ARAvoid (ara_read_cb)(ara_t *ara, ara_async_res_t *res);
-
-typedef ARAvoid (ara_write_work_done)(ara_t *ara, ara_async_req_t *req);
-typedef ARAvoid (ara_write_work)(ara_t *ara, ara_async_req_t *req, ara_work_done *done);
-typedef ARAvoid (ara_write_cb)(ara_t *ara, ara_async_res_t *res);
-
-typedef ARAvoid (ara_unlink_work_done)(ara_t *ara, ara_async_req_t *req);
-typedef ARAvoid (ara_unlink_work)(ara_t *ara, ara_async_req_t *req, ara_work_done *done);
-typedef ARAvoid (ara_unlink_cb)(ara_t *ara, ara_async_res_t *res);
+#define ARA_MAX_WORK 64
 
 enum ara_work {
-#define X(which) ARA_WORK_##which
+#define WORK(which) ARA_##which
 
-  X(UNKNOWN) = 0,
-  X(OPEN) = 1 << 0x1,
-  X(CLOSE) = 2 << 0x1,
-  X(END) = 3 << 0x1,
-  X(READ) = 4 << 0x1,
-  X(WRITE) = 5 << 0x1,
-  X(UNLINK) = 6 << 0x1,
-  X(NONE) = ARA_MAX_ENUM
+  WORK(UNKNOWN) = 0,
+  WORK(OPEN),
+  WORK(CLOSE),
+  WORK(END),
+  WORK(READ),
+  WORK(WRITE),
+  WORK(UNLINK),
 
-#undef X
+  WORK(NONE) = ARA_MAX_ENUM
+
+#undef WORK
 };
 
 enum ara_status {
-#define X(which) ARA_STATUS_##which
+#define STATUS(which) ARA_STATUS_##which
 
-  X(UNKNOWN) = 0,
-  X(INIT),
-  X(OPENING),
-  X(OPENED),
-  X(CLOSING),
-  X(CLOSED),
-  X(NONE) = ARA_MAX_ENUM
+  STATUS(UNKNOWN) = 0,
+  STATUS(INIT),
+  STATUS(OPENING),
+  STATUS(OPENED),
+  STATUS(CLOSING),
+  STATUS(CLOSED),
 
-#undef X
+  STATUS(NONE) = ARA_MAX_ENUM
+
+#undef STATUS
 };
 
-enum ara_error_code {
-#define E(type) ARA_E##type
-
-  E(UNKNOWN) = 0,
-  E(NOMEM),
-  E(NOCALLBACK),
-  E(NOUVLOOP),
-  E(UVASYNCINIT),
-  E(UVASYNCSEND),
-  E(BADSTATE),
-  E(BADDATA),
-  E(ACCESS),
-  E(NONE) = ARA_MAX_ENUM
-
-#undef E
-};
-
-struct ara_error {
-  ara_error_code_t code;
-  ARAvoid *data;
-};
 
 struct ara_buffer {
   struct ara_buffer_data {
@@ -122,7 +77,7 @@ struct ara_async_data {
   ARAuint64 offset;
   ARAuint64 length;
   ARAvoid *alloc;
-  ara_work_cb *callback;
+  ara_cb *callback;
 };
 
 struct ara_async_res {
@@ -153,16 +108,7 @@ struct ara {
   ara_error_t error;
   ara_status_t status;
 
-#define X(which) ara_##which##_work *which;
-
-  X(open);
-  X(close);
-  X(end);
-  X(read);
-  X(write);
-  X(unlink);
-
-#undef X
+  ara_work_cb *work[ARA_MAX_WORK];
 
   struct {
     ARAbitfield work;
@@ -174,7 +120,7 @@ ARA_EXPORT ARAboolean
 ara_init(ara_t *self);
 
 ARA_EXPORT ARAboolean
-ara_set(ara_t *ara, ara_work_t type, ara_worker_cb *cb);
+ara_set(ara_t *ara, ara_work_t type, ara_work_cb *cb);
 
 ARA_EXPORT ARAboolean
 ara_set_loop(ara_t *ara, uv_loop_t *loop);
@@ -182,15 +128,24 @@ ara_set_loop(ara_t *ara, uv_loop_t *loop);
 ARA_EXPORT ARAboolean
 ara_throw(ara_t *ara, ara_error_code_t code);
 
-// error
 ARA_EXPORT ARAboolean
-ara_set_error(ara_error_t *err, ara_error_code_t code, ARAvoid *data);
-
-ARA_EXPORT ARAboolean
-ara_clear_error(ara_error_t *err);
+ara_call(ara_t *ara, ara_work_t type, ara_async_req_t *req, ara_done_cb *done);
 
 ARA_EXPORT ARAchar *
-ara_strerror(ara_error_code_t code);
+ara_status_string(ara_t *ara);
+
+ARA_EXPORT ARAchar *
+ara_strstatus(ara_status_t status);
+
+// noop
+ARAvoid
+ara_noop_done_cb(ara_async_req_t *req);
+
+ARAvoid
+ara_noop_work_cb(ara_async_req_t *req, ara_done_cb *done);
+
+ARAvoid
+ara_noop_cb(ara_async_res_t *res);
 
 // async
 ARA_EXPORT ara_async_data_t *
@@ -241,24 +196,22 @@ ara_buffer_write(ara_buffer_t *buffer, ARAuint offset, ARAuint length, ARAvoid *
 
 // api
 ARA_EXPORT ARAboolean
-ara_open(ara_t *ara, ara_async_data_t *data, ara_open_cb *cb);
+ara_open(ara_t *ara, ara_async_data_t *data, ara_cb *cb);
 
 ARA_EXPORT ARAboolean
-ara_close(ara_t *ara, ara_async_data_t *data, ara_close_cb *cb);
+ara_close(ara_t *ara, ara_async_data_t *data, ara_cb *cb);
 
 ARA_EXPORT ARAboolean
-ara_end(ara_t *ara, ara_async_data_t *data, ara_end_cb *cb);
+ara_end(ara_t *ara, ara_async_data_t *data, ara_cb *cb);
 
 ARA_EXPORT ARAboolean
-ara_read(ara_t *ara, ara_async_data_t *data, ara_read_cb *cb);
+ara_read(ara_t *ara, ara_async_data_t *data, ara_cb *cb);
 
 ARA_EXPORT ARAboolean
-ara_write(ara_t *ara, ara_async_data_t *data, ara_write_cb *cb);
-
-// @TODO ara_write
+ara_write(ara_t *ara, ara_async_data_t *data, ara_cb *cb);
 
 ARA_EXPORT ARAboolean
-ara_unlink(ara_t *ara, ara_async_data_t *data, ara_unlink_cb *cb);
+ara_unlink(ara_t *ara, ara_async_data_t *data, ara_cb *cb);
 
 #if defined(__cplusplus)
 }

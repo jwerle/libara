@@ -8,22 +8,22 @@ static ARAvoid
 on_uv_fs_done(uv_fs_t *fs) {
   ara_async_req_t *req = (ara_async_req_t *) fs->data;
   RandomAccessFileRequest *rafreq = (RandomAccessFileRequest *) req->data.data;
-  ara_open_work_done *done = (ara_open_work_done *) rafreq->done;
+  ara_done_cb *done = (ara_done_cb *) rafreq->done;
   RandomAccessFile *raf = rafreq->raf;
 
   panic(fs->result > -1, "uv: error: '%s'", uv_strerror(fs->result));
   uv_fs_req_cleanup(fs);
-  done(req->ara, req);
+  done(req);
 }
 
 static ARAvoid
-on_ara_end(ara_t *ara, ara_async_res_t *res) {
-  D(end, "on_ara_end()");
-  ON_ARA_WORK_DONE(ara, res, RandomAccessFileEndCallback);
+onend(ara_async_res_t *res) {
+  D(end, "onend()");
+  ON_ARA_WORK_DONE(res, RandomAccessFileEndCallback);
 }
 
 static ARAvoid
-ara_work_end(ara_t *ara, ara_async_req_t *req, ara_open_work_done *done) {
+ara_work_end(ara_async_req_t *req, ara_done_cb *done) {
   D(end, "ara_work_end()");
 
   RandomAccessFileRequest *rafreq = (RandomAccessFileRequest *) req->data.data;
@@ -40,7 +40,7 @@ ara_work_end(ara_t *ara, ara_async_req_t *req, ara_open_work_done *done) {
   ARAuint mtime = raf->mtime;
 
   if (0 == atime && 0 == mtime) {
-    done(ara, req);
+    done(req);
   } else if (atime && mtime) {
   } else {
   }
@@ -64,11 +64,11 @@ raf_end(RandomAccessFile *self,
 
   data.data = req;
 
-  panic(ara_set(&self->ara, ARA_WORK_END, (ara_worker_cb *) ara_work_end),
+  panic(ara_set(&self->ara, ARA_END, ara_work_end),
         "ara: error: '%s'",
         ara_strerror(self->ara.error.code));
 
-  panic(ara_end(&self->ara, &data, on_ara_end),
+  panic(ara_end(&self->ara, &data, onend),
         "ara: error: '%s'",
         ara_strerror(self->ara.error.code));
 

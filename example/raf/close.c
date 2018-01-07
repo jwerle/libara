@@ -10,12 +10,12 @@ on_uv_fs_done(uv_fs_t *fs) {
 
   ara_async_req_t *req = (ara_async_req_t *) fs->data;
   RandomAccessFileRequest *rafreq = (RandomAccessFileRequest *) req->data.data;
-  ara_close_work_done *done = (ara_close_work_done *) rafreq->done;
+  ara_done_cb *done = (ara_done_cb *) rafreq->done;
   RandomAccessFile *raf = rafreq->raf;
 
   panic(fs->result > -1, "uv: error: '%s'", uv_strerror(fs->result));
   uv_fs_req_cleanup(fs);
-  done(req->ara, req);
+  done(req);
 }
 
 static ARAvoid
@@ -30,13 +30,13 @@ on_uv_fs_close(uv_fs_t *fs) {
 }
 
 static ARAvoid
-on_ara_close(ara_t *ara, ara_async_res_t *res) {
-  D(close, "on_ara_close()");
-  ON_ARA_WORK_DONE(ara, res, RandomAccessFileCloseCallback);
+onclose(ara_async_res_t *res) {
+  D(close, "onclose()");
+  ON_ARA_WORK_DONE(res, RandomAccessFileCloseCallback);
 }
 
 static ARAvoid
-ara_work_close(ara_t *ara, ara_async_req_t *req, ara_open_work_done *done) {
+ara_work_close(ara_async_req_t *req, ara_done_cb *done) {
   D(close, "ara_work_close()");
   RandomAccessFileRequest *rafreq = (RandomAccessFileRequest *) req->data.data;
 
@@ -47,7 +47,7 @@ ara_work_close(ara_t *ara, ara_async_req_t *req, ara_open_work_done *done) {
 
   D(close, "ara_work_close(): fd=%d filename=%s", rafreq->raf->fd, rafreq->raf->filename);
 
-  uv_fs_close(ara->loop, (uv_fs_t *) &rafreq->fs, rafreq->raf->fd, on_uv_fs_close);
+  uv_fs_close(req->ara->loop, (uv_fs_t *) &rafreq->fs, rafreq->raf->fd, on_uv_fs_close);
 }
 
 ARAboolean
@@ -63,11 +63,11 @@ raf_close(RandomAccessFile *self, RandomAccessFileCloseCallback *callback) {
 
   data.data = req;
 
-  panic(ara_set(&self->ara, ARA_WORK_CLOSE, (ara_worker_cb *) ara_work_close),
+  panic(ara_set(&self->ara, ARA_CLOSE, ara_work_close),
         "ara: error: '%s'",
         ara_strerror(self->ara.error.code));
 
-  panic(ara_close(&self->ara, &data, on_ara_close),
+  panic(ara_close(&self->ara, &data, onclose),
         "ara: error: '%s'",
         ara_strerror(self->ara.error.code));
 
