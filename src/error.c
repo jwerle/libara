@@ -34,7 +34,6 @@ ara_set_error(ara_error_t *self, ara_error_code_t code, ARAvoid *data) {
 ARAchar *
 ara_strerror(ara_error_code_t code) {
   ARAchar * uverrstr = 0;
-  uv_err_t uverr = {0};
 #define E(code, message) ARA_E##code: return message
   switch (code) {
     case E(UNKNOWN, "An unknown error has occurred.");
@@ -49,8 +48,7 @@ ara_strerror(ara_error_code_t code) {
     case E(NONE, "");
     //  Leaks a few bytes of memory when you call it with an unknown error code.
     default: 
-      uverr.code = code;
-      uverrstr = (ARAchar*) uv_strerror( uverr );
+      uverrstr = (ARAchar*) uv_strerror(code);
   }
 #undef E
   if (0 != uverrstr) {
