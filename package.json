@@ -1,6 +1,6 @@
 {
   "name": "libara",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "repo": "jwerle/libara",
   "keywords": [],
   "install": "configure && make && make install",

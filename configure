@@ -21,13 +21,14 @@ function semver() {
     tr -d ',' |          \
     tr -d '[:space:]' |  \
     tr '.' '\t' |        \
-    awk '{print $3}' |   \
+    eval $(printf "awk '{print $%d}'" $1) |   \
     tr -d '[:space:]'
   return $?
 }
-declare -i VERSION_MAJOR=$(semver 0)
-declare -i VERSION_MINOR=$(semver 1)
-declare -i VERSION_PATCH=$(semver 2)
+
+declare -i VERSION_MAJOR=$(semver 1)
+declare -i VERSION_MINOR=$(semver 2)
+declare -i VERSION_PATCH=$(semver 3)
 declare -i VERSION_REVISION=1
 
 ## Script name
