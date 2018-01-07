@@ -4,7 +4,7 @@ libara
 `libara` is a library for constructing random access memory interfaces.
 Operations are asynchronous and are provided data structures for
 relaying memory between functions. It is built on top of libuv
-(libuv >= 1.x.x). It is inspried by [abstract-random-access](
+(libuv >= 1.x.x). It is inspired by [abstract-random-access](
 https://github.com/juliangruber/abstract-random-access).
 
 ## Abstract
