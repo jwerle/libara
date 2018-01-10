@@ -1,4 +1,3 @@
-#include <clamp/clamp.h>
 #include <flag/flag.h>
 #include <assert.h>
 #include <stdio.h>
