@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <uv.h>
 
-#include "work.h"
+#include "op.h"
 
 static ARAvoid
 on_async_end(ara_async_res_t *res) {
@@ -79,10 +79,10 @@ ara_write(ara_t *self, ara_async_data_t *data, ara_cb *callback) {
   if (self) {
     switch (self->status) {
       case ARA_STATUS_OPENED:
-        WORK(self, ARA_WRITE, req, data, on_async_begin, on_async_end);
+        OP(self, ARA_WRITE, req, data, on_async_begin, on_async_end);
         break;
 
-      default: WORK_THROW(self, ARA_EBADSTATE);
+      default: OP_THROW(self, ARA_EBADSTATE);
     }
   }
 

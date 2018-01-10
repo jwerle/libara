@@ -1,6 +1,6 @@
 #include <ara/ara.h>
 #include <uv.h>
-#include "work.h"
+#include "op.h"
 
 static ARAvoid
 on_async_end(ara_async_res_t *res) {
@@ -78,10 +78,10 @@ ara_unlink(ara_t *self, ara_async_data_t *data, ara_cb *callback) {
     switch (self->status) {
       case ARA_STATUS_OPENING:
       case ARA_STATUS_OPENED:
-        WORK(self, ARA_UNLINK, req, data, on_async_begin, on_async_end);
+        OP(self, ARA_UNLINK, req, data, on_async_begin, on_async_end);
         break;
 
-      default: WORK_THROW(self, ARA_EBADSTATE);
+      default: OP_THROW(self, ARA_EBADSTATE);
     }
   }
 

@@ -1,6 +1,6 @@
 #include <ara/ara.h>
 #include <uv.h>
-#include "work.h"
+#include "op.h"
 
 static ARAvoid
 on_async_end(ara_async_res_t *res) {
@@ -82,5 +82,5 @@ ara_open(ara_t *self, ara_async_data_t *data, ara_cb *callback) {
     data->callback = callback;
   }
 
-  WORK(self, ARA_OPEN, req, data, on_async_begin, on_async_end);
+  OP(self, ARA_OPEN, req, data, on_async_begin, on_async_end);
 }
