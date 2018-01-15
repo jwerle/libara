@@ -23,6 +23,7 @@ BUILD_LIB ?= $(BUILD_DIRECTORY)/lib
 PREFIX ?= @PREFIX@
 CWD ?= $(shell pwd)
 OS ?= $(shell uname)
+SHELL := /bin/bash
 
 ## Project command dependencies
 _MKDIR = mkdir -p
