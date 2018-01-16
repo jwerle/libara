@@ -12,7 +12,6 @@
     "include/ara/error.h",
     "include/ara/noop.h",
     "include/ara/work.h",
-    "include/ara/op.h",
 
     "src/ara.c",
     "src/async.c",
@@ -21,6 +20,7 @@
     "src/end.c",
     "src/error.c",
     "src/noop.c",
+    "src/op.h",
     "src/open.c",
     "src/read.c",
     "src/unlink.c",
