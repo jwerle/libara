@@ -1,6 +1,6 @@
 {
   "name": "ara",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "repo": "jwerle/libara",
   "keywords": [],
   "description": "libara is a library for constructing random access memory interfaces.",
