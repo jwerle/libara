@@ -566,6 +566,7 @@ function main {
   if (( $DEBUG )); then
     CONFIGURE_FLAGS+="--debug=true"
     cflag '-D ARA_DEBUG'
+    cflag '-g'
   else
     CONFIGURE_FLAGS+="--debug=false"
   fi
