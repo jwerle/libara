@@ -18,7 +18,12 @@
  * copy of `str`, or `NULL` on failure.
  */
 
+#if defined( _MSC_VER )
+#include <string.h>
+#define strdup(str) _strdup(str)
+#else
 char *
 strdup(const char *str);
+#endif
 
 #endif /* HAVE_STRDUP */
