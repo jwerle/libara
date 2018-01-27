@@ -1,0 +1,156 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="deps">
+      <UniqueIdentifier>{3aa70493-21c9-47f1-b7b2-25d76ec102e6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="deps\asprintf">
+      <UniqueIdentifier>{6704a3a4-91cf-40b3-9e70-a1472d489d04}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="deps\assertion-macros">
+      <UniqueIdentifier>{5803c4a1-8f76-4036-917e-b6a4a8215fb0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="deps\console-colors">
+      <UniqueIdentifier>{1a4d63da-dd61-4106-a146-2dc716a36668}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="deps\debug">
+      <UniqueIdentifier>{77586994-7cef-4774-86d0-5313dbeaf525}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="deps\describe">
+      <UniqueIdentifier>{f97cd82a-8c5e-4c35-a8e8-3cf2c9cdd158}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="deps\flag">
+      <UniqueIdentifier>{b0696ea8-7929-4fb0-936a-035ea3adc798}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="deps\strdup">
+      <UniqueIdentifier>{a38cd497-fc2a-46f5-919c-2c55830d8f04}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="deps\wildcardcmp">
+      <UniqueIdentifier>{aebd2907-718e-4973-a12c-d9fb790a1d05}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="include">
+      <UniqueIdentifier>{5cb9b19a-cb72-4a5a-92da-704cc8b45147}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="visualstudio">
+      <UniqueIdentifier>{f9f6e4f5-f491-4e74-aa10-c41fc9318352}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\ara.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\async.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\buffer.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\close.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\end.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\error.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\noop.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\open.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\read.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\unlink.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\write.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\flag\flag.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\asprintf\asprintf.c">
+      <Filter>deps\asprintf</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\console-colors\console-colors.c">
+      <Filter>deps\console-colors</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\debug\debug.c">
+      <Filter>deps\debug</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\wildcardcmp\wildcardcmp.c">
+      <Filter>deps\wildcardcmp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\describe\describe.c">
+      <Filter>deps\describe</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\strdup\strdup.c">
+      <Filter>deps\strdup</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\deps\asprintf\asprintf.h">
+      <Filter>deps\asprintf</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\strdup\strdup.h">
+      <Filter>deps\strdup</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\wildcardcmp\wildcardcmp.h">
+      <Filter>deps\wildcardcmp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\assertion-macros\assertion-macros.h">
+      <Filter>deps\assertion-macros</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\console-colors\console-colors.h">
+      <Filter>deps\console-colors</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\debug\debug.h">
+      <Filter>deps\debug</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\describe\describe.h">
+      <Filter>deps\describe</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\flag\flag.h">
+      <Filter>deps\flag</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\op.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\ara\ara.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\ara\async.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\ara\buffer.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\ara\common.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\ara\error.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\ara\noop.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\ara\work.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>visualstudio</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="libara.rc">
+      <Filter>visualstudio</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>

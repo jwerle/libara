@@ -10,3 +10,14 @@ test/write
 test/unlink
 example/raf/raf
 example/simple/simple
+.vs
+*.aps
+*.obj
+*.log
+*.pch
+*.pdb
+*.sdf
+*.vcxproj.user
+*.exe
+*.dll
+*.lib
