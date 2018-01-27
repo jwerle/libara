@@ -54,15 +54,16 @@ on_async_begin(ara_async_req_t *req) {
     case ARA_STATUS_OPENED:
       self->status = ARA_STATUS_CLOSING;
       ara_call(self, ARA_CLOSE, req, &on_done);
-      return;
+	  break;
 
     case ARA_STATUS_CLOSING:
     case ARA_STATUS_CLOSED:
-      return on_done(req);
+      on_done(req);
+	  break;
 
     default:
       ara_throw(self, ARA_EBADSTATE);
-      return on_done(req);
+      on_done(req);
   }
 }
 
