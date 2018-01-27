@@ -7,7 +7,7 @@
 //
 
 #ifndef HAVE_STRDUP
-
+#if !defined( _MSC_VER )
 #include <stdlib.h>
 #include <string.h>
 #include "strdup.h"
@@ -19,5 +19,5 @@ strdup(const char *str) {
   if (buf) memcpy(buf, str, len);
   return buf;
 }
-
+#endif
 #endif /* HAVE_STRDUP */
