@@ -21,3 +21,5 @@ example/simple/simple
 *.exe
 *.dll
 *.lib
+*.suo
+int/
