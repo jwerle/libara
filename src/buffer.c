@@ -56,7 +56,7 @@ ara_buffer_realloc(ara_buffer_t *self, const ARAuint64 length) {
 
   if (length) {
     if (self->data.base && self->data.length) {
-      ARAvoid *region = (ARAvoid *) realloc(self->data.base, length);
+      ARAchar *region = (ARAchar *) realloc(self->data.base, length);
       if (region) {
         memset(region + length, 0, length);
         self->data.base = region;
@@ -103,7 +103,7 @@ ara_buffer_destroy(ara_buffer_t *self) {
 
 ARA_EXPORT ARAuint
 ara_buffer_write(ara_buffer_t *self, ARAuint offset, ARAuint length, ARAvoid *data) {
-  ARAvoid *region = 0;
+  ARAchar *region = 0;
 
   if (0 == self) {
     return 0;
@@ -139,7 +139,7 @@ ara_buffer_read(ara_buffer_t *self, ARAuint offset, ARAuint length, ARAvoid *out
     return 0;
   }
 
-  ARAvoid *region = self->data.base;
+  ARAchar *region = self->data.base;
 
   if (0 == region) {
     return 0;
