@@ -50,12 +50,13 @@ on_async_begin(ara_async_req_t *req) {
   switch (self->status) {
     case ARA_STATUS_OPENED:
       ara_call(self, ARA_END, req, &on_done);
-      return;
+      break;
 
     default:
       ara_throw(self, ARA_EBADSTATE);
-      return on_done(req);
+      on_done(req);
   }
+  return;
 }
 
 ARAboolean
