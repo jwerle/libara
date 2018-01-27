@@ -3,7 +3,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#if defined( _MSC_VER )
+#include <io.h>
+#else
 #include <unistd.h>
+#endif
 #include "strdup/strdup.h"
 #include "asprintf/asprintf.h"
 #include "wildcardcmp/wildcardcmp.h"
