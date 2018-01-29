@@ -18,19 +18,19 @@ typedef enum RandomAccessFileFlags RandomAccessFileFlags;
 
 typedef ARAvoid * RandomAccessFileCallback;
 
-#define CALLBACK(which) typedef ARAvoid \
+#define RAF_CALLBACK(which) typedef ARAvoid \
   (RandomAccessFile##which##Callback)(  \
     RandomAccessFile *raf,              \
     RandomAccessFileRequest *req);      \
 
-  CALLBACK(Open)
-  CALLBACK(Close)
-  CALLBACK(End)
-  CALLBACK(Read)
-  CALLBACK(Write)
-  CALLBACK(Unlink)
+RAF_CALLBACK(Open)
+RAF_CALLBACK(Close)
+RAF_CALLBACK(End)
+RAF_CALLBACK(Read)
+RAF_CALLBACK(Write)
+RAF_CALLBACK(Unlink)
 
-#undef CALLBACK
+#undef RAF_CALLBACK
 
 struct RandomAccessFileDebuggers {
 #define X(which) struct { ARAboolean init; debug_t d; } which;
