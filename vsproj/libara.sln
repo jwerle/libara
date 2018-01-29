@@ -5,6 +5,8 @@ VisualStudioVersion = 15.0.27130.2026
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libara", "libara.vcxproj", "{0D0E187E-379A-48BB-AD99-7A1C565FC78E}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "example-simple", "example-simple\example-simple.vcxproj", "{AA00A5D5-3BB9-4C7D-AFB6-3ADA7F24268F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -14,13 +16,19 @@ Global
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{0D0E187E-379A-48BB-AD99-7A1C565FC78E}.Debug|x64.ActiveCfg = Debug|x64
-		{0D0E187E-379A-48BB-AD99-7A1C565FC78E}.Debug|x64.Build.0 = Debug|x64
 		{0D0E187E-379A-48BB-AD99-7A1C565FC78E}.Debug|x86.ActiveCfg = Debug|Win32
 		{0D0E187E-379A-48BB-AD99-7A1C565FC78E}.Debug|x86.Build.0 = Debug|Win32
 		{0D0E187E-379A-48BB-AD99-7A1C565FC78E}.Release|x64.ActiveCfg = Release|x64
-		{0D0E187E-379A-48BB-AD99-7A1C565FC78E}.Release|x64.Build.0 = Release|x64
 		{0D0E187E-379A-48BB-AD99-7A1C565FC78E}.Release|x86.ActiveCfg = Release|Win32
 		{0D0E187E-379A-48BB-AD99-7A1C565FC78E}.Release|x86.Build.0 = Release|Win32
+		{AA00A5D5-3BB9-4C7D-AFB6-3ADA7F24268F}.Debug|x64.ActiveCfg = Debug|x64
+		{AA00A5D5-3BB9-4C7D-AFB6-3ADA7F24268F}.Debug|x64.Build.0 = Debug|x64
+		{AA00A5D5-3BB9-4C7D-AFB6-3ADA7F24268F}.Debug|x86.ActiveCfg = Debug|Win32
+		{AA00A5D5-3BB9-4C7D-AFB6-3ADA7F24268F}.Debug|x86.Build.0 = Debug|Win32
+		{AA00A5D5-3BB9-4C7D-AFB6-3ADA7F24268F}.Release|x64.ActiveCfg = Release|x64
+		{AA00A5D5-3BB9-4C7D-AFB6-3ADA7F24268F}.Release|x64.Build.0 = Release|x64
+		{AA00A5D5-3BB9-4C7D-AFB6-3ADA7F24268F}.Release|x86.ActiveCfg = Release|Win32
+		{AA00A5D5-3BB9-4C7D-AFB6-3ADA7F24268F}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -73,9 +73,6 @@
     <ClCompile Include="..\src\write.c">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\deps\flag\flag.c">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="..\deps\asprintf\asprintf.c">
       <Filter>deps\asprintf</Filter>
     </ClCompile>
@@ -93,6 +90,9 @@
     </ClCompile>
     <ClCompile Include="..\deps\strdup\strdup.c">
       <Filter>deps\strdup</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\flag\flag.c">
+      <Filter>deps\flag</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
