@@ -69,27 +69,27 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\Users\Mark\source\libuv\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(IncludePath)</IncludePath>
     <IntDir>..\int\$(Platform)\$(Configuration)\</IntDir>
     <OutDir>..\build\$(Platform)\$(Configuration)\</OutDir>
-    <LibraryPath>C:\Users\Mark\source\libuv\bin\Debug\Win32;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\Users\Mark\source\libuv\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(IncludePath)</IncludePath>
     <IntDir>..\int\$(Platform)\$(Configuration)\</IntDir>
     <OutDir>..\build\$(Platform)\$(Configuration)\</OutDir>
-    <LibraryPath>C:\Users\Mark\source\libuv\bin\Release\Win32;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>C:\Users\Mark\source\libuv\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Users\Mark\source\libuv\Debug\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(IncludePath)</IncludePath>
+    <LibraryPath>$(LibraryPath)</LibraryPath>
     <IntDir>..\int\$(Platform)\$(Configuration)\</IntDir>
     <OutDir>..\build\$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>C:\Users\Mark\source\libuv\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Users\Mark\source\libuv\Release\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(IncludePath)</IncludePath>
+    <LibraryPath>$(LibraryPath)</LibraryPath>
     <IntDir>..\int\$(Platform)\$(Configuration)\</IntDir>
     <OutDir>..\build\$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
